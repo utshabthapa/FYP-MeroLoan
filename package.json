@@ -7,7 +7,7 @@
     "dev": "nodemon backend/index.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Utshab Thapa",
   "type": "module",
   "license": "ISC",
   "dependencies": {
