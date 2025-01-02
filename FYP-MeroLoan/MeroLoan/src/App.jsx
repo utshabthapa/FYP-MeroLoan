@@ -2,22 +2,20 @@ import React from "react";
 import LandingPage from "./pages/LandingPage";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/navbar";
-
-function MainLayout() {
-  return (
-    <>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/navbar" element={<Navbar />} />
-      </Routes>
-    </>
-  );
-}
+import Login from "./pages/login";
+import Register from "./pages/register";
 
 function App() {
   return (
     <BrowserRouter>
-      <MainLayout />
+      <>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/navbar" element={<Navbar />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </>
     </BrowserRouter>
   );
 }
