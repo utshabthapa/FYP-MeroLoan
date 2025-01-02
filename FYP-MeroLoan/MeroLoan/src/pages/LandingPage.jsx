@@ -1,10 +1,12 @@
+import Navbar from "@/components/navbar";
 import React from "react";
+import heroImage from "../assets/landingPageMain.png";
 
 const LandingPage = () => {
   return (
     <div>
-      <h1 className="">Welcome to MeroLoan</h1>
-      <p>Get a loan in 5 minutes</p>
+      <Navbar />
+      <img src={heroImage} alt="" className="w-32 h-32" />
     </div>
   );
 };

@@ -34,7 +34,10 @@ const Login = () => {
               />
             </label>
             <div className="flex items-center justify-end mt-6">
-              <a href="/forgot-password" className="text-gray-800 mt- text-sm">
+              <a
+                href="/forgot-password"
+                className="text-gray-800 mt- text-sm font-semibold"
+              >
                 Forgot Password?
               </a>
             </div>
@@ -45,7 +48,7 @@ const Login = () => {
           </form>
           <p className="text-gray-500 mt-6">
             Don't have an account?{" "}
-            <a href="/register" className="text-gray-800">
+            <a href="/register" className="text-gray-800 font-semibold">
               Register
             </a>
           </p>
