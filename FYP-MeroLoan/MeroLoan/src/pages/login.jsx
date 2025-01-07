@@ -1,59 +1,53 @@
 import React from "react";
 import Navbar from "@/components/navbar";
+import { motion } from "framer-motion";
 
 const Login = () => {
   return (
-    <div>
+    <div className="overflow-hidden bg-gradient-to-b from-gray-50 to-gray-300">
       <Navbar />
-      <div className="flex items-center justify-center h-dvh">
-        <div className="w-3/12 h-[500px] mt-16 bg-white shadow-lg border rounded-lg flex flex-col items-center justify-center p-6 ">
-          <h1 className="font-extrabold text-3xl text-gray-800">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="flex items-center justify-center h-dvh"
+      >
+        <div className="relative rounded-b-3xl w-3/12 h-[430px] mt-16 bg-white bg-opacity-50 shadow-lg rounded-xl flex flex-col items-center justify- p-6 backdrop-blur-2xl backdrop-filter">
+          <h1 className="font-black text-3xl bg-clip-text bg-gradient-to-r from-gray-800 to-gray-600 text-transparent mt-6">
             Welcome Back
           </h1>
           <p className="text-gray-500 mt-3 font-medium">
-            Please enter your credentials to log in
+            Enter your credentials to access your account
           </p>
-
-          <form className="mt-8 w-full relative">
-            <label htmlFor="" className="">
-              <p className="text-gray-600 mt- font-medium">Email</p>
-
+          <form className="mt-6 w-full font-semibold text-gray-700">
+            <label className="text-sm  " htmlFor="">
+              Email
               <input
                 type="email"
-                placeholder="Enter your email address"
-                className="w-full p-2 border rounded-lg border-gray-300 mt-2 "
+                placeholder="Enter your email"
+                className="w-full px-2 py-2 text-sm  border rounded-lg border-gray-300 mt-1 mb-4 "
               />
             </label>
-            <label htmlFor="" className="">
-              <p className="text-gray-600 mt-6 font-medium">Password</p>
-
+            <label className="mt-4" htmlFor="">
+              Password
               <input
                 type="password"
                 placeholder="Enter your password"
-                className="w-full p-2 border rounded-lg border-gray-300 mt-2"
+                className="w-full px-2 py-2 text-sm  border rounded-lg border-gray-300 mt-1"
               />
             </label>
-            <div className="flex items-center justify-end mt-6">
-              <a
-                href="/forgot-password"
-                className="text-gray-800 mt- text-sm font-semibold"
-              >
-                Forgot Password?
-              </a>
-            </div>
-
-            <button className="w-full bg-gray-800 p-2 rounded-lg text-white mt-8">
+            <button className="w-full bg-gray-800 px-2 py-2 text-sm  rounded-lg text-white my-4">
               Login
             </button>
           </form>
-          <p className="text-gray-500 mt-6">
-            Don't have an account?{" "}
-            <a href="/register" className="text-gray-800 font-semibold">
+          <div className="bg-gradient-to-r from-gray-700 to-gray-900 text-white absolute bottom-0 w-full py-3 rounded-b-3xl mt-8 flex flex-col items-center tracking-wider">
+            <p className="text-sm">Don't have an account? </p>
+            <a href="/register" className="text-clip text-sm font-bold">
               Register
             </a>
-          </p>
+          </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

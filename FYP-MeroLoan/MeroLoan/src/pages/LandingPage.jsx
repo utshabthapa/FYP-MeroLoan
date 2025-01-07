@@ -35,7 +35,7 @@ const LandingPage = () => {
           </div>
         </div>
         <div className="w-1/2  p-14">
-          <img src={heroImage} alt="" className="w-full" />
+          <img src={heroImage} alt="" className="w-full rounded-3xl" />
         </div>
       </div>
       <div className="w-full bg-gray-100 h-[600px] flex flex-col items-center justify-center">
@@ -50,6 +50,33 @@ const LandingPage = () => {
           <div className="w-72 h-56 bg-white"></div>
           <div className="w-72 h-56 bg-white"></div>
           <div className="w-72 h-56 bg-white"></div>
+        </div>
+      </div>
+      <div className="w-full bg-white h-[600px] flex flex-col items-center justify-center">
+        <div>
+          <h2 className="text-4xl font-extrabold text-center">Key Features</h2>
+        </div>
+        <div className="flex mt-14 space-x-14">
+          <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
+          <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
+          <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
+        </div>
+      </div>
+      <div className="w-full bg-gray-300 h-[600px] flex flex-col items-center justify-center">
+        <div>
+          <h2 className="text-4xl font-extrabold text-center">Key Features</h2>
+        </div>
+        <div className="flex flex-col  ">
+          <div className="flex space-x-14">
+            <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
+            <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
+            <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
+          </div>
+          <div className="flex space-x-14 mt-14">
+            <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
+            <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
+            <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
+          </div>
         </div>
       </div>
     </div>
