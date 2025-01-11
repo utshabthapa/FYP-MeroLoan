@@ -9,6 +9,7 @@ import {
   sendVerificationEmail,
   sendWelcomeEmail,
 } from "../mailtrap/emails.js";
+import { set } from "mongoose";
 
 export const signup = async (req, res) => {
   const { email, password, name } = req.body;
@@ -195,12 +196,10 @@ export const checkAuth = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in checkAuth:", error.message);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Internal server error",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };
