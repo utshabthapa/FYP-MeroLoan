@@ -1,71 +1,80 @@
+import nodemailer from "nodemailer";
 import {
   PASSWORD_RESET_REQUEST_TEMPLATE,
   PASSWORD_RESET_SUCCESS_TEMPLATE,
   VERIFICATION_EMAIL_TEMPLATE,
 } from "./emailTemplate.js";
-import { mailtrapClient, sender } from "./mailtrap.config.js";
+import dotenv from "dotenv";
+dotenv.config();
 
+// Configure Nodemailer transporter for Gmail
+const transporter = nodemailer.createTransport({
+  service: "gmail", // Use Gmail as the service
+  auth: {
+    user: process.env.GMAIL_USER, // Your Gmail email address
+    pass: process.env.GMAIL_PASS, // Your Gmail app password (not your regular Gmail password)
+  },
+});
+
+const sender = '"MeroLoan" <your-email@gmail.com>'; // Replace with your Gmail address
+
+// Send Verification Email
 export const sendVerificationEmail = async (email, verificationToken) => {
-  const recipient = [{ email }];
   try {
-    const response = await mailtrapClient.send({
+    await transporter.sendMail({
       from: sender,
-      to: recipient,
+      to: email,
       subject: "MeroLoan - Verify your email address",
       html: VERIFICATION_EMAIL_TEMPLATE.replace(
         "{verificationCode}",
         verificationToken
       ),
-      category: "Email Verification",
     });
   } catch (error) {
-    throw new Error(`error sending verification email: ${error}`);
+    throw new Error(`Error sending verification email: ${error.message}`);
   }
 };
 
+// Send Welcome Email
 export const sendWelcomeEmail = async (email, name) => {
-  const recipient = [{ email }];
   try {
-    const response = await mailtrapClient.send({
+    await transporter.sendMail({
       from: sender,
-      to: recipient,
-      template_uuid: "2871932b-eb0f-4e9b-a380-2522b6d80cb1",
-      template_variables: {
-        company_info_name: "MeroLoan",
-        name: name,
-      },
+      to: email,
+      subject: "Welcome to MeroLoan!",
+      html: `<p>Dear ${name},</p><p>Welcome to MeroLoan! We're excited to have you on board.</p>`,
     });
   } catch (error) {
-    throw new Error(`error sending welcome email: ${error}`);
+    throw new Error(`Error sending welcome email: ${error.message}`);
   }
 };
 
+// Send Password Reset Email
 export const sendPasswordResetEmail = async (email, resetURL) => {
-  const recipient = [{ email }];
   try {
-    const response = await mailtrapClient.send({
+    await transporter.sendMail({
       from: sender,
-      to: recipient,
+      to: email,
       subject: "MeroLoan - Reset your password",
       html: PASSWORD_RESET_REQUEST_TEMPLATE.replace("{resetURL}", resetURL),
-      category: "Password Reset",
     });
   } catch (error) {
-    throw new Error(`error sending password reset email: ${error}`);
+    throw new Error(`Error sending password reset email: ${error.message}`);
   }
 };
 
+// Send Password Reset Success Email
 export const sendPasswordResetSuccessEmail = async (email) => {
-  const recipient = [{ email }];
   try {
-    const response = await mailtrapClient.send({
+    await transporter.sendMail({
       from: sender,
-      to: recipient,
+      to: email,
       subject: "MeroLoan - Password reset successful",
       html: PASSWORD_RESET_SUCCESS_TEMPLATE,
-      category: "Password Reset",
     });
   } catch (error) {
-    throw new Error(`error sending password reset success email: ${error}`);
+    throw new Error(
+      `Error sending password reset success email: ${error.message}`
+    );
   }
 };
