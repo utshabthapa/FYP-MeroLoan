@@ -12,9 +12,9 @@ import {
 import { set } from "mongoose";
 
 export const signup = async (req, res) => {
-  const { email, password, name } = req.body;
+  const { email, password, name, address, phone } = req.body;
   try {
-    if (!email || !password || !name) {
+    if (!email || !password || !name || !address || !phone) {
       throw new Error("All input is required");
     }
 
@@ -30,6 +30,8 @@ export const signup = async (req, res) => {
       email,
       password: hashedPassword,
       name,
+      address,
+      phone,
       verificationToken,
       verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
     });

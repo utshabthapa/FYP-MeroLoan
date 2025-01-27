@@ -11,6 +11,10 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
+import UserManagement from "./pages/UserManagement";
+import InsuranceReview from "./pages/InsuranceReview";
+import LoanApplicationReview from "./pages/LoanApplicationReview";
+import UserProfile from "./pages/UserProfile";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
@@ -21,6 +25,9 @@ const ProtectedRoute = ({ children }) => {
 
   if (!user.isVerified) {
     return <Navigate to="/verify-email" replace />;
+  }
+  if (isAuthenticated && user.isVerified && user.role === "admin") {
+    return <Navigate to="/adminDashboard" replace />;
   }
 
   return children;
@@ -51,7 +58,7 @@ const RedirectAuthenticatedUser = ({ children }) => {
     return <Navigate to="/" replace />;
   }
   if (isAuthenticated && user.isVerified && user.role === "admin") {
-    return <Navigate to="/admin" replace />;
+    return <Navigate to="/adminDashboard" replace />;
   }
 
   return children;
@@ -70,10 +77,34 @@ function App() {
       <>
         <Routes>
           <Route
-            path="/admin"
+            path="/adminDashboard"
             element={
               <AdminRoute>
                 <AdminDashboard />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/userManagement"
+            element={
+              <AdminRoute>
+                <UserManagement />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/loanApplicationReview"
+            element={
+              <AdminRoute>
+                <LoanApplicationReview />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/insuranceReview"
+            element={
+              <AdminRoute>
+                <InsuranceReview />
               </AdminRoute>
             }
           />
@@ -90,6 +121,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/userProfile"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
               </ProtectedRoute>
             }
           />

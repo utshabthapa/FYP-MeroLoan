@@ -2,10 +2,10 @@ import React from "react";
 
 const Navbar = () => {
   return (
-    <div className="fixed border-b-2 w-full bg-white">
+    <div className="sticky top-0 z-50 border-b-2 bg-white">
       <div className="flex justify-between mx-auto items-center p-4 bg-white text-black font-semibold rounded-lg max-w-screen-2xl">
         <div>
-          <h1 className="text-2xl font-">MeroLoan</h1>
+          <h1 className="text-2xl">MeroLoan</h1>
         </div>
         <div>
           <ul className="flex space-x-6">

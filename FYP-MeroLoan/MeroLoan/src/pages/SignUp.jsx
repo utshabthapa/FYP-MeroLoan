@@ -3,13 +3,15 @@ import Navbar from "@/components/Navbar";
 import Input from "../components/Input";
 import { motion } from "framer-motion";
 import { useAuthStore } from "@/store/authStore";
-import { Loader, Lock, Mail, User } from "lucide-react";
+import { Loader, Lock, Mail, MapPin, Phone, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const SignUp = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
   const navigate = useNavigate();
   useAuthStore();
 
@@ -19,7 +21,7 @@ const SignUp = () => {
     e.preventDefault();
 
     try {
-      await signup(email, password, name);
+      await signup(email, password, name, address, phone);
       navigate("/verify-email");
     } catch (error) {
       console.log(error);
@@ -27,7 +29,7 @@ const SignUp = () => {
   };
 
   return (
-    <div className="overflow-hidden bg-gradient-to-b from-white to-gray-200">
+    <div className=" bg-gradient-to-b from-white to-gray-200">
       <Navbar />
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -54,7 +56,24 @@ const SignUp = () => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter you Name"
+              placeholder="Enter your Name"
+            />
+            <Input
+              icon={MapPin}
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Enter your Address"
+            />
+            <Input
+              icon={Phone}
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Enter your Phone Number"
+              maxLength={10}
+              pattern="[0-9]{10}"
+              title="Please enter a valid 10-digit phone number"
             />
             <Input
               icon={Mail}
@@ -74,7 +93,7 @@ const SignUp = () => {
               <p className="text-red-500 font-semibold mt-2">{error}</p>
             )}
             <div className=" mt-4">
-              <input type="checkbox" className="mr-2" />
+              <input type="checkbox" className="mr-2" required />
               <label className="text-gray-700 text-sm">
                 I agree to the Terms and Conditions
               </label>

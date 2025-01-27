@@ -1,81 +1,204 @@
-import Navbar from "@/components/Navbar";
 import React from "react";
+import Navbar from "@/components/Navbar";
 import heroImage from "../assets/landingPageMain.png";
+import {
+  Shield,
+  Users,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  DollarSign,
+  LineChart,
+  UserPlus,
+  Lock,
+} from "lucide-react";
+
+const FeatureCard = ({ icon: Icon, title, description }) => (
+  <div className="w-96 h-56 border border-gray-800 rounded-lg bg-white p-6 hover:shadow-xl transition-shadow">
+    <Icon className="w-12 h-12 text-gray-800 mb-4" />
+    <h3 className="text-xl font-bold mb-2 text-gray-900">{title}</h3>
+    <p className="text-gray-600">{description}</p>
+  </div>
+);
+
+const StatCard = ({ title, value }) => (
+  <div className="w-72 h-56 bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow flex flex-col items-center justify-center text-center border border-gray-200">
+    <h3 className="text-4xl font-bold text-gray-900 mb-4">{value}</h3>
+    <p className="text-gray-700 font-semibold">{title}</p>
+  </div>
+);
 
 const LandingPage = () => {
+  const stats = [
+    { title: "Active Users", value: "50,000+" },
+    { title: "Total Loans Funded", value: "$25M+" },
+    { title: "Average ROI", value: "12.5%" },
+    { title: "Success Rate", value: "98%" },
+  ];
+
+  const keyFeatures = [
+    {
+      icon: Users,
+      title: "Direct P2P Matching",
+      description:
+        "Connect directly with verified lenders or borrowers based on your specific requirements and preferences.",
+    },
+    {
+      icon: TrendingUp,
+      title: "Dynamic Interest Rates",
+      description:
+        "Competitive interest rates determined by our AI-driven risk assessment system and market conditions.",
+    },
+    {
+      icon: Shield,
+      title: "Secure Transactions",
+      description:
+        "Bank-grade security with encrypted transactions and verified identity checks for all users.",
+    },
+  ];
+
+  const benefits = [
+    {
+      icon: Clock,
+      title: "Quick Approval",
+      description:
+        "Get loan approval within 24 hours with our streamlined verification process.",
+    },
+    {
+      icon: LineChart,
+      title: "Portfolio Diversification",
+      description:
+        "Lenders can spread investments across multiple loans to minimize risk.",
+    },
+    {
+      icon: CheckCircle,
+      title: "Flexible Terms",
+      description:
+        "Choose from various loan terms and repayment schedules that suit your needs.",
+    },
+    {
+      icon: DollarSign,
+      title: "Competitive Returns",
+      description:
+        "Earn higher returns compared to traditional savings accounts.",
+    },
+    {
+      icon: UserPlus,
+      title: "Community Trust",
+      description:
+        "Build your credit score and trust rating within our community.",
+    },
+    {
+      icon: Lock,
+      title: "Data Privacy",
+      description:
+        "Your financial information is protected with advanced encryption.",
+    },
+  ];
+
   return (
-    <div>
+    <div className="">
       <Navbar />
-      <div className="flex items-center justify h-dvh max-w-screen-2xl mx-auto">
-        <div className="  w-1/2 flex flex-col justify-center ">
-          <h1 className="text-6xl font-extrabold">
-            Simple, Fast and Secure Loans at Your Fingertips
+
+      {/* Hero Section */}
+      <div className="flex items-center justify-between h-dvh max-w-screen-2xl mx-auto px-4">
+        <div className="w-1/2 flex flex-col justify-center">
+          <h1 className="text-6xl font-extrabold text-gray-900">
+            Peer-to-Peer Lending Made Simple and Secure
           </h1>
-          <p className=" mt-8 font-semibold text-gray-500 text-left ">
-            Experience hassle-free loans with dynamic interest rates and <br />
-            personalized recommendations
+          <p className="mt-8 text-xl text-gray-600 leading-relaxed">
+            Join thousands of users who trust our platform for P2P lending.
+            Whether you're looking to invest or borrow, we've got you covered
+            with transparent rates and secure transactions.
           </p>
-          <div className="flex mt-14">
-            <button>
-              <a
-                href="/register"
-                className="w-48 bg-gray-800 py-4 px-6 rounded-lg text-white mt-4"
-              >
-                Get Started Now
-              </a>
-              <button className="ml-4">
-                <a
-                  href="/login"
-                  className="text-gray-800 font-semibold px-6 py-4 border border-gray-300 rounded-lg"
-                >
-                  Learn More
-                </a>
-              </button>
-            </button>
+          <div className="flex mt-14 space-x-4">
+            <a
+              href="/register"
+              className="bg-gray-900 hover:bg-gray-800 py-4 px-8 rounded-lg text-white font-semibold transition-colors"
+            >
+              Get Started Now
+            </a>
+            <a
+              href="/login"
+              className="text-gray-900 font-semibold px-8 py-4 border-2 border-gray-900 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Learn More
+            </a>
           </div>
         </div>
-        <div className="w-1/2  p-14">
-          <img src={heroImage} alt="" className="w-full rounded-3xl" />
+        <div className="w-1/2 p-14">
+          <img
+            src={heroImage}
+            alt="P2P Lending Platform"
+            className="w-full rounded-3xl shadow-2xl"
+          />
         </div>
       </div>
-      <div className="w-full bg-gray-100 h-[600px] flex flex-col items-center justify-center">
-        <div>
-          <h2 className="text-4xl font-extrabold text-center">
-            Connecting borrowers and lenders with <br /> transparency,
-            flexibility and security
+
+      {/* Stats Section */}
+      <div className="w-full bg-gray-50 py-20">
+        <div className="max-w-screen-2xl mx-auto">
+          <h2 className="text-4xl font-extrabold text-center mb-14 text-gray-900">
+            Trusted by Thousands of Users
           </h2>
-        </div>
-        <div className="flex mt-14 space-x-12">
-          <div className="w-72 h-56 bg-white"></div>
-          <div className="w-72 h-56 bg-white"></div>
-          <div className="w-72 h-56 bg-white"></div>
-          <div className="w-72 h-56 bg-white"></div>
-        </div>
-      </div>
-      <div className="w-full bg-white h-[600px] flex flex-col items-center justify-center">
-        <div>
-          <h2 className="text-4xl font-extrabold text-center">Key Features</h2>
-        </div>
-        <div className="flex mt-14 space-x-14">
-          <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
-          <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
-          <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
-        </div>
-      </div>
-      <div className="w-full bg-gray-300 h-[600px] flex flex-col items-center justify-center">
-        <div>
-          <h2 className="text-4xl font-extrabold text-center">Key Features</h2>
-        </div>
-        <div className="flex flex-col  ">
-          <div className="flex space-x-14">
-            <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
-            <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
-            <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
+          <div className="flex justify-center space-x-12">
+            {stats.map((stat, index) => (
+              <StatCard key={index} {...stat} />
+            ))}
           </div>
-          <div className="flex space-x-14 mt-14">
-            <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
-            <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
-            <div className="w-96 h-56 border-gray-300 border-2 rounded-lg bg-white"></div>
+        </div>
+      </div>
+
+      {/* Key Features Section */}
+      <div className="w-full bg-white py-20">
+        <div className="max-w-screen-2xl mx-auto">
+          <h2 className="text-4xl font-extrabold text-center mb-14 text-gray-900">
+            Why Choose Our Platform?
+          </h2>
+          <div className="flex justify-center space-x-14">
+            {keyFeatures.map((feature, index) => (
+              <FeatureCard key={index} {...feature} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Benefits Section */}
+      <div className="w-full bg-gray-50 py-20">
+        <div className="max-w-screen-2xl mx-auto">
+          <h2 className="text-4xl font-extrabold text-center mb-14 text-gray-900">
+            Platform Benefits
+          </h2>
+          <div className="grid grid-cols-3 gap-14 max-w-6xl mx-auto">
+            {benefits.map((benefit, index) => (
+              <FeatureCard key={index} {...benefit} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="w-full bg-gray-900 py-20">
+        <div className="max-w-screen-2xl mx-auto text-center">
+          <h2 className="text-4xl font-extrabold text-white mb-6">
+            Ready to Start Your P2P Lending Journey?
+          </h2>
+          <p className="text-xl text-gray-300 mb-10">
+            Join our community of lenders and borrowers today
+          </p>
+          <div className="flex justify-center space-x-6">
+            <a
+              href="/register"
+              className="bg-white text-gray-900 hover:bg-gray-100 py-4 px-8 rounded-lg font-semibold transition-colors"
+            >
+              Create Account
+            </a>
+            <a
+              href="/contact"
+              className="text-white border-2 border-white hover:bg-gray-800 px-8 py-4 rounded-lg font-semibold transition-colors"
+            >
+              Contact Us
+            </a>
           </div>
         </div>
       </div>

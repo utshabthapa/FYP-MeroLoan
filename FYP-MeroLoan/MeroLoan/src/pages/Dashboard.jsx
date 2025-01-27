@@ -10,7 +10,7 @@ const Dashboard = () => {
     logout();
   };
   return (
-    <div className="overflow-hidden bg-gradient-to-b from-white to-gray-200">
+    <div className=" bg-gradient-to-b from-white to-gray-200">
       <Navbar />
       <motion.div
         initial={{ opacity: 0, y: 10 }}
