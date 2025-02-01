@@ -16,7 +16,34 @@ export const useAuthStore = create((set) => ({
   isCheckingAuth: true,
   message: null,
 
-  signup: async (email, password, name, address, phone) => {
+  updateProfilePicture: async (image, userId) => {
+    // Ensure set is not reassigned
+    set((state) => ({ ...state, isLoading: true, error: null }));
+
+    try {
+      const response = await axios.put(
+        `${API_URL}/update-profile-picture`,
+        { image, userId },
+        { withCredentials: true }
+      );
+
+      set((state) => ({
+        ...state,
+        user: response.data.user,
+        isLoading: false,
+      }));
+    } catch (error) {
+      set((state) => ({
+        ...state,
+        error:
+          error.response?.data?.message || "Failed to update profile picture",
+        isLoading: false,
+      }));
+      throw error;
+    }
+  },
+
+  signup: async (email, password, name, address, phone, image) => {
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post(`${API_URL}/signup`, {
@@ -25,6 +52,7 @@ export const useAuthStore = create((set) => ({
         name,
         address,
         phone,
+        image,
       });
       set({
         user: response.data.user,
@@ -39,6 +67,7 @@ export const useAuthStore = create((set) => ({
       throw error;
     }
   },
+
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {

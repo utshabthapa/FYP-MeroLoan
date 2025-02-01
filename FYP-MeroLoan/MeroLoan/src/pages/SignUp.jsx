@@ -12,6 +12,7 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
+  const [image, setImage] = useState([]);
   const navigate = useNavigate();
   useAuthStore();
 
@@ -21,11 +22,48 @@ const SignUp = () => {
     e.preventDefault();
 
     try {
-      await signup(email, password, name, address, phone);
+      let uploadedImage = image;
+
+      if (image) {
+        // Upload image to Cloudinary
+        const formData = new FormData();
+        formData.append("file", image);
+        formData.append("upload_preset", "UserImages_Preset"); // Replace with your Cloudinary preset
+
+        const response = await fetch(
+          "https://api.cloudinary.com/v1_1/dqejmq2px/image/upload",
+          {
+            method: "PUT",
+            body: formData,
+          }
+        );
+        const data = await response.json();
+        uploadedImage = data.secure_url; // Store the URL from Cloudinary
+      }
+
+      // Send the Cloudinary image URL to the backend (image URL, not base64)
+      await signup(email, password, name, address, phone, uploadedImage);
       navigate("/verify-email");
     } catch (error) {
       console.log(error);
     }
+  };
+
+  //handle and convert it in base 64
+  const handleImage = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFileToBase(file);
+      console.log(file);
+    }
+  };
+
+  const setFileToBase = (file) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = () => {
+      setImage(reader.result);
+    };
   };
 
   return (
@@ -51,6 +89,12 @@ const SignUp = () => {
             Upload profile picture (optional)
           </p>
           <form onSubmit={handleSubmit} className="mt- w-full">
+            <Input
+              icon={User}
+              type="file"
+              onChange={handleImage}
+              placeholder="Enter your image"
+            />
             <Input
               icon={User}
               type="text"

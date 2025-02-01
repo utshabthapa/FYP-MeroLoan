@@ -10,28 +10,49 @@ import {
   sendWelcomeEmail,
 } from "../mailtrap/emails.js";
 import { set } from "mongoose";
+import multer from "multer";
+import path from "path";
+
+import cloudinary from "../utils/cloudinary.js";
 
 export const signup = async (req, res) => {
-  const { email, password, name, address, phone } = req.body;
+  const { email, password, name, address, phone, image } = req.body;
   try {
     if (!email || !password || !name || !address || !phone) {
       throw new Error("All input is required");
     }
 
     const useralreadyexists = await User.findOne({ email });
+    const phonealreadyexists = await User.findOne({ phone });
     if (useralreadyexists) {
       return res
         .status(400)
         .json({ success: false, message: "User already exists" });
     }
+    if (phonealreadyexists) {
+      return res
+        .status(400)
+        .json({ success: false, message: "phone number already exists" });
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationToken = generateVerificationToken();
+    // let result = "";
+    // try {
+    //   result = await cloudinary.uploader.upload(image, {
+    //     folder: "UserImages",
+    //   });
+    // } catch (error) {
+    //   return res
+    //     .status(500)
+    //     .json({ success: false, message: "Image upload failed" });
+    // }
     const user = new User({
       email,
       password: hashedPassword,
       name,
       address,
       phone,
+      image,
       verificationToken,
       verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
     });
@@ -51,6 +72,52 @@ export const signup = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+export const updateProfilePicture = async (req, res) => {
+  let { image } = req.body;
+  const { userId } = req.body;
+
+  try {
+    // Fetch the user by ID from the database
+    const user = await User.findById(userId); // Find the user by ID
+
+    if (!user) {
+      console.log("User not found");
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    console.log("User before update:", user); // Log user before any changes
+
+    if (image) {
+      if (user.image) {
+        // Delete the old image from Cloudinary if it exists
+        console.log("Deleting old image:", user.image); // Log old image URL
+        await cloudinary.uploader.destroy(
+          user.image.split("/").pop().split(".")[0]
+        );
+      }
+
+      // Upload the new image to Cloudinary
+      const uploadedResponse = await cloudinary.uploader.upload(image);
+      image = uploadedResponse.secure_url; // Get the URL of the uploaded image
+      console.log("New image uploaded:", image); // Log the new image URL
+    }
+
+    user.image = image || user.image; // Update the user's image field
+    console.log("User after image update:", user); // Log user after image update
+
+    await user.save(); // Save the updated user
+
+    user.password = null; // Remove the password field before sending the response
+
+    // Log the user before sending the response to ensure it's correct
+    console.log("Updated user (sending response):", user);
+    res.status(200).json(user); // Send the updated user as a response
+  } catch (err) {
+    console.error("Error in updateProfilePicture:", err.message);
+    res.status(500).json({ error: err.message });
   }
 };
 

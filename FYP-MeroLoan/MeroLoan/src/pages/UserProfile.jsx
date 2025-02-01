@@ -3,6 +3,10 @@ import { motion } from "framer-motion";
 import { useAuthStore } from "../store/authStore";
 import { Camera, CheckCircle, FileText, CreditCard } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 
 const ActivityItem = ({ icon: Icon, title, description, date }) => (
   <div className="flex items-start space-x-4 p-4 hover:bg-gray-50 rounded-lg transition-colors">
@@ -17,24 +21,70 @@ const ActivityItem = ({ icon: Icon, title, description, date }) => (
   </div>
 );
 
+ActivityItem.propTypes = {
+  icon: PropTypes.elementType.isRequired,
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string.isRequired,
+  date: PropTypes.string.isRequired,
+};
+
 const UserProfile = () => {
-  const { user } = useAuthStore();
   const [previewImage, setPreviewImage] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
+
+  const navigate = useNavigate(); // Initialize useNavigate
+  const { user, updateProfilePicture } = useAuthStore();
+  console.log("User object:", user);
+  if (!user) {
+    return <div>Loading...</div>; // Handle the case where user is not yet loaded
+  }
 
   const handleImageClick = () => {
     fileInputRef.current.click();
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-      // Here you would typically handle the file upload to your backend
+      try {
+        setIsUploading(true);
+        setPreviewImage(URL.createObjectURL(file));
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "UserImages_Preset");
+
+        const response = await fetch(
+          "https://api.cloudinary.com/v1_1/dqejmq2px/image/upload",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const data = await response.json();
+        const uploadedImage = data.secure_url;
+
+        // Update the profile picture with the image URL and user ID
+        const userId = user?._id;
+
+        if (!userId) {
+          toast.error("User ID not found!");
+          return;
+        }
+
+        await updateProfilePicture(uploadedImage, userId);
+        toast.success("Profile picture updated successfully!");
+        // Refresh the page after profile update
+        window.location.reload();
+        navigate("/userProfile");
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        toast.error("Failed to update profile picture");
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -80,18 +130,25 @@ const UserProfile = () => {
                   <div
                     className="w-40 h-40 rounded-full overflow-hidden border-4 border-gray-200 cursor-pointer"
                     onClick={handleImageClick}
+                    role="button"
+                    aria-label="Change profile picture"
                   >
                     <img
                       src={
                         previewImage ||
-                        user.profilePicture ||
+                        user?.image ||
                         "https://via.placeholder.com/150"
                       }
                       alt="Profile"
                       className="w-full h-full object-cover"
+                      aria-label="User profile picture"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Camera className="w-8 h-8 text-white" />
+                      {isUploading ? (
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+                      ) : (
+                        <Camera className="w-8 h-8 text-white" />
+                      )}
                     </div>
                   </div>
                   <input
@@ -100,6 +157,7 @@ const UserProfile = () => {
                     onChange={handleImageChange}
                     accept="image/*"
                     className="hidden"
+                    disabled={isUploading}
                   />
                 </div>
                 <p className="mt-4 text-sm text-gray-500">
@@ -129,7 +187,7 @@ const UserProfile = () => {
                     Full Name
                   </label>
                   <p className="mt-1 p-2 block w-full rounded-md border border-gray-300 bg-gray-50">
-                    {user.name}
+                    {user?.name}
                   </p>
                 </div>
                 <div>
@@ -137,7 +195,7 @@ const UserProfile = () => {
                     Email Address
                   </label>
                   <p className="mt-1 p-2 block w-full rounded-md border border-gray-300 bg-gray-50">
-                    {user.email}
+                    {user?.email}
                   </p>
                 </div>
                 <div>
@@ -145,7 +203,7 @@ const UserProfile = () => {
                     Phone Number
                   </label>
                   <p className="mt-1 p-2 block w-full rounded-md border border-gray-300 bg-gray-50">
-                    {user.phone || "+977 9841234567"}
+                    {user?.phone || "+977 9841234567"}
                   </p>
                 </div>
                 <div>
@@ -153,7 +211,7 @@ const UserProfile = () => {
                     Address
                   </label>
                   <p className="mt-1 p-2 block w-full rounded-md border border-gray-300 bg-gray-50">
-                    {user.address || "Kathmandu, Nepal"}
+                    {user?.address || "Kathmandu, Nepal"}
                   </p>
                 </div>
               </div>

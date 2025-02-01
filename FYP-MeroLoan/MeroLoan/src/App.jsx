@@ -15,23 +15,32 @@ import UserManagement from "./pages/UserManagement";
 import InsuranceReview from "./pages/InsuranceReview";
 import LoanApplicationReview from "./pages/LoanApplicationReview";
 import UserProfile from "./pages/UserProfile";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
 
+  // Show a loading spinner while checking auth
+  if (isCheckingAuth) {
+    return <LoadingSpinner />;
+  }
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!user.isVerified) {
+  if (!user || !user.isVerified) {
+    // Check if user exists and isVerified
     return <Navigate to="/verify-email" replace />;
   }
+
   if (isAuthenticated && user.isVerified && user.role === "admin") {
     return <Navigate to="/adminDashboard" replace />;
   }
 
   return children;
 };
+
 const AdminRoute = ({ children }) => {
   const { isAuthenticated, user } = useAuthStore();
 
@@ -52,8 +61,12 @@ const AdminRoute = ({ children }) => {
 
 // redirect authenticated users to the home page
 const RedirectAuthenticatedUser = ({ children }) => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
 
+  // Show a loading spinner while checking auth
+  if (isCheckingAuth) {
+    return <LoadingSpinner />;
+  }
   if (isAuthenticated && user.isVerified && user.role === "user") {
     return <Navigate to="/" replace />;
   }
@@ -75,6 +88,7 @@ function App() {
   return (
     <BrowserRouter>
       <>
+        <ToastContainer />
         <Routes>
           <Route
             path="/adminDashboard"
@@ -164,7 +178,14 @@ function App() {
               </RedirectAuthenticatedUser>
             }
           />
-          <Route path="/verify-email" element={<EmailVerificationPage />} />
+          <Route
+            path="/verify-email"
+            element={
+              <RedirectAuthenticatedUser>
+                <EmailVerificationPage />
+              </RedirectAuthenticatedUser>
+            }
+          />
         </Routes>
       </>
     </BrowserRouter>
