@@ -16,7 +16,8 @@ import path from "path";
 import cloudinary from "../utils/cloudinary.js";
 
 export const signup = async (req, res) => {
-  const { email, password, name, address, phone, image } = req.body;
+  const { email, password, name, address, phone, image, kycStatus, kycId } =
+    req.body;
   try {
     if (!email || !password || !name || !address || !phone) {
       throw new Error("All input is required");
@@ -36,16 +37,7 @@ export const signup = async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationToken = generateVerificationToken();
-    // let result = "";
-    // try {
-    //   result = await cloudinary.uploader.upload(image, {
-    //     folder: "UserImages",
-    //   });
-    // } catch (error) {
-    //   return res
-    //     .status(500)
-    //     .json({ success: false, message: "Image upload failed" });
-    // }
+
     const user = new User({
       email,
       password: hashedPassword,
@@ -53,6 +45,8 @@ export const signup = async (req, res) => {
       address,
       phone,
       image,
+      kycStatus, // Include kycStatus here
+      kycId, // Include kycId here if available
       verificationToken,
       verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
     });

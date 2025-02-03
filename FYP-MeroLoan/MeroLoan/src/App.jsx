@@ -17,6 +17,8 @@ import LoanApplicationReview from "./pages/LoanApplicationReview";
 import UserProfile from "./pages/UserProfile";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import KYCForm from "./pages/KYCForm";
+import KYCAdminPage from "./pages/KYCAdminPage";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -184,6 +186,24 @@ function App() {
               <RedirectAuthenticatedUser>
                 <EmailVerificationPage />
               </RedirectAuthenticatedUser>
+            }
+          />
+          {/* KYC Admin Page for Admins */}
+          <Route
+            path="/kyc-admin"
+            element={
+              <AdminRoute>
+                <KYCAdminPage />
+              </AdminRoute>
+            }
+          />
+          {/* KYC Form Page for Users */}
+          <Route
+            path="/kyc-form/:_id"
+            element={
+              <ProtectedRoute>
+                <KYCForm />
+              </ProtectedRoute>
             }
           />
         </Routes>

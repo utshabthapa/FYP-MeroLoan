@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import {
   TrendingUp,
@@ -7,6 +7,7 @@ import {
   FileText,
   Shield,
 } from "lucide-react";
+import { useAdminStore } from "../store/adminStore";
 
 const StatCard = ({ title, value, change, icon: Icon }) => (
   <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -14,13 +15,15 @@ const StatCard = ({ title, value, change, icon: Icon }) => (
       <div>
         <p className="text-sm text-gray-600">{title}</p>
         <h3 className="text-2xl font-semibold mt-1">{value}</h3>
-        <p
-          className={`text-sm mt-2 ${
-            change.startsWith("+") ? "text-green-500" : "text-red-500"
-          }`}
-        >
-          {change} from last month
-        </p>
+        {change && (
+          <p
+            className={`text-sm mt-2 ${
+              change.startsWith("+") ? "text-green-500" : "text-red-500"
+            }`}
+          >
+            {change} from last month
+          </p>
+        )}
       </div>
       {Icon && <Icon className="w-8 h-8 text-gray-400" />}
     </div>
@@ -28,28 +31,43 @@ const StatCard = ({ title, value, change, icon: Icon }) => (
 );
 
 const AdminDashboard = () => {
+  const { adminStats, isLoading, error, fetchAdminStats, fetchAllUsers } =
+    useAdminStore();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await Promise.all([fetchAdminStats(), fetchAllUsers()]);
+      } catch (err) {
+        console.error("Error fetching admin data:", err);
+      }
+    };
+
+    fetchData();
+  }, [fetchAdminStats, fetchAllUsers]);
+
   const stats = [
     {
       title: "Total Users",
-      value: "24,521",
-      change: "+12%",
+      value: adminStats.totalUsers || 0,
+      change: "+12%", // Placeholder until backend supports change tracking
       icon: Users,
     },
     {
       title: "Total Loans",
-      value: "$12.9M",
+      value: `$${(adminStats.totalLoans / 1e6).toFixed(2)}M` || "$0M",
       change: "+8%",
       icon: FileText,
     },
     {
       title: "Active Loans",
-      value: "8,234",
+      value: adminStats.activeLoans || 0,
       change: "-3%",
       icon: FileText,
     },
     {
       title: "Insurance Subs",
-      value: "5,147",
+      value: adminStats.totalInsuranceSubscriptions || 0,
       change: "+15%",
       icon: Shield,
     },
@@ -68,11 +86,17 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <StatCard key={index} {...stat} />
-          ))}
-        </div>
+        {isLoading ? (
+          <p>Loading stats...</p>
+        ) : error ? (
+          <p className="text-red-500">{error}</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {stats.map((stat, index) => (
+              <StatCard key={index} {...stat} />
+            ))}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">

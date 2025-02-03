@@ -109,6 +109,14 @@ const UserProfile = () => {
     },
   ];
 
+  const handleKYCRedirect = () => {
+    if (!user?._id) {
+      toast.error("User ID is not available for KYC verification!");
+      return;
+    }
+    navigate(`/kycVerification/${user._id}`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -163,10 +171,46 @@ const UserProfile = () => {
                 <p className="mt-4 text-sm text-gray-500">
                   Click to change profile picture
                 </p>
-                <div className="mt-2 inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                  <CheckCircle className="w-4 h-4 mr-1" />
-                  Verified Account
-                </div>
+                {/* KYC Status and Verification Button */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
+                >
+                  <div className="flex flex-col items-center">
+                    {user?.kycStatus === "approved" ? (
+                      <div className="text-green-500">KYC Approved</div>
+                    ) : user?.kycStatus === "rejected" ? (
+                      <div className="text-red-500">KYC Rejected</div>
+                    ) : (
+                      <div className="text-yellow-500">KYC Pending</div>
+                    )}
+                    <button
+                      onClick={() => navigate(`/kyc-form/${user?._id}`)}
+                      className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-full"
+                    >
+                      {user?.kycStatus === "pending"
+                        ? "Complete KYC"
+                        : "View KYC Status"}
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+
+            {/* KYC Verification Button */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mt-6"
+            >
+              <div className="flex justify-center">
+                <button
+                  onClick={handleKYCRedirect}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Complete KYC Verification
+                </button>
               </div>
             </motion.div>
           </div>

@@ -16,6 +16,31 @@ export const useAuthStore = create((set) => ({
   isCheckingAuth: true,
   message: null,
 
+  signup: async (email, password, name, address, phone, image) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post(`${API_URL}/signup`, {
+        email,
+        password,
+        name,
+        address,
+        phone,
+        image,
+      });
+      set({
+        user: response.data.user,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+    } catch (error) {
+      set({
+        error: error.response.data.message || "Error signing up",
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
   updateProfilePicture: async (image, userId) => {
     // Ensure set is not reassigned
     set((state) => ({ ...state, isLoading: true, error: null }));
@@ -39,31 +64,6 @@ export const useAuthStore = create((set) => ({
           error.response?.data?.message || "Failed to update profile picture",
         isLoading: false,
       }));
-      throw error;
-    }
-  },
-
-  signup: async (email, password, name, address, phone, image) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await axios.post(`${API_URL}/signup`, {
-        email,
-        password,
-        name,
-        address,
-        phone,
-        image,
-      });
-      set({
-        user: response.data.user,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-    } catch (error) {
-      set({
-        error: error.response.data.message || "Error signing up",
-        isLoading: false,
-      });
       throw error;
     }
   },

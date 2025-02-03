@@ -22,15 +22,3 @@ export const verifyToken = (req, res, next) => {
     return res.status(401).json({ success: false, message: "Unauthorized" });
   }
 };
-
-export const isAdmin = async (req, res, next) => {
-  try {
-    const user = await userModel.findById(req.user.sub);
-    if (!user || user.role !== "admin") {
-      return next(createError(403, "You are not admin."));
-    }
-    next();
-  } catch (err) {
-    next(createError(500, "Server Error"));
-  }
-};

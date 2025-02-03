@@ -43,15 +43,19 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    kycStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+    },
+    kycId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "KYC",
+    },
     resetPasswordToken: String,
     resetPasswordExpiresAt: Date,
     verificationToken: String,
     verificationTokenExpiresAt: Date,
-    profilePicture: {
-      // Add the profile picture field
-      type: String,
-      default: "", // Default is an empty string
-    },
   },
   { timestamps: true }
 );
