@@ -16,7 +16,7 @@ export const useAuthStore = create((set) => ({
   isCheckingAuth: true,
   message: null,
 
-  signup: async (email, password, name, address, phone, image) => {
+  signup: async (email, password, name, address, phone, image, public_id) => {
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post(`${API_URL}/signup`, {
@@ -26,6 +26,7 @@ export const useAuthStore = create((set) => ({
         address,
         phone,
         image,
+        public_id,
       });
       set({
         user: response.data.user,
@@ -41,14 +42,14 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  updateProfilePicture: async (image, userId) => {
+  updateProfilePicture: async (image, publicId, userId) => {
     // Ensure set is not reassigned
     set((state) => ({ ...state, isLoading: true, error: null }));
 
     try {
       const response = await axios.put(
-        `${API_URL}/update-profile-picture`,
-        { image, userId },
+        `${API_URL}/update-profile-picture/${userId}`,
+        { image, publicId, userId },
         { withCredentials: true }
       );
 

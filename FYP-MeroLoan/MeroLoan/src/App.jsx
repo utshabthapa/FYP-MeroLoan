@@ -19,6 +19,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import KYCForm from "./pages/KYCForm";
 import KYCAdminPage from "./pages/KYCAdminPage";
+import KYCDetailsPage from "./pages/KYCDetailsPage";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -101,10 +102,18 @@ function App() {
             }
           />
           <Route
-            path="/userManagement"
+            path="/kycApplications"
             element={
               <AdminRoute>
-                <UserManagement />
+                <KYCAdminPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/kyc/:kycId"
+            element={
+              <AdminRoute>
+                <KYCDetailsPage />
               </AdminRoute>
             }
           />

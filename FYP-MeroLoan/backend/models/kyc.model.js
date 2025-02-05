@@ -29,7 +29,6 @@ const kycSchema = new mongoose.Schema(
     identityNumber: { type: String, required: true },
     issuedPlace: { type: String, required: true },
     issuedDate: { type: Date, required: true },
-    profilePicture: { type: String, required: true },
     identityCardFront: { type: String, required: true },
     identityCardBack: { type: String, required: true },
     status: {

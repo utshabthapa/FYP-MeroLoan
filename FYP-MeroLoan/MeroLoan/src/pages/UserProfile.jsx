@@ -1,7 +1,18 @@
 import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "../store/authStore";
-import { Camera, CheckCircle, FileText, CreditCard } from "lucide-react";
+import {
+  Camera,
+  CheckCircle,
+  FileText,
+  CreditCard,
+  CheckCircle2,
+  CheckCircle2Icon,
+  LucideCheckCircle,
+  LucideCheckCircle2,
+  CheckCircleIcon,
+  Check,
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -35,7 +46,8 @@ const UserProfile = () => {
 
   const navigate = useNavigate(); // Initialize useNavigate
   const { user, updateProfilePicture } = useAuthStore();
-  console.log("User object:", user);
+  console.log("User kyc id:", user.kycId);
+
   if (!user) {
     return <div>Loading...</div>; // Handle the case where user is not yet loaded
   }
@@ -51,6 +63,7 @@ const UserProfile = () => {
         setIsUploading(true);
         setPreviewImage(URL.createObjectURL(file));
 
+        // Upload new image to Cloudinary
         const formData = new FormData();
         formData.append("file", file);
         formData.append("upload_preset", "UserImages_Preset");
@@ -65,20 +78,17 @@ const UserProfile = () => {
 
         const data = await response.json();
         const uploadedImage = data.secure_url;
+        const publicId = data.public_id;
 
-        // Update the profile picture with the image URL and user ID
         const userId = user?._id;
-
         if (!userId) {
           toast.error("User ID not found!");
           return;
         }
 
-        await updateProfilePicture(uploadedImage, userId);
+        // Update profile picture with new image URL
+        await updateProfilePicture(uploadedImage, publicId, userId);
         toast.success("Profile picture updated successfully!");
-        // Refresh the page after profile update
-        window.location.reload();
-        navigate("/userProfile");
       } catch (error) {
         console.error("Error uploading image:", error);
         toast.error("Failed to update profile picture");
@@ -109,14 +119,6 @@ const UserProfile = () => {
     },
   ];
 
-  const handleKYCRedirect = () => {
-    if (!user?._id) {
-      toast.error("User ID is not available for KYC verification!");
-      return;
-    }
-    navigate(`/kycVerification/${user._id}`);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -127,16 +129,17 @@ const UserProfile = () => {
           className="grid grid-cols-1 md:grid-cols-3 gap-8"
         >
           {/* Left Column - Profile Picture and Actions */}
-          <div className="space-y-6">
+          <div className="space-y-6 relative">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
+              className="bg-white p- rounded-xl shadow-sm border border-gray-200"
             >
+              <div className="w-full h-32 absolute rounded-t-xl  bg-gray-900"></div>
               <div className="flex flex-col items-center">
-                <div className="relative group">
+                <div className="relative group mt-14">
                   <div
-                    className="w-40 h-40 rounded-full overflow-hidden border-4 border-gray-200 cursor-pointer"
+                    className="w-36 h-36 rounded-full overflow-hidden border-4 border-white cursor-pointer"
                     onClick={handleImageClick}
                     role="button"
                     aria-label="Change profile picture"
@@ -151,7 +154,7 @@ const UserProfile = () => {
                       className="w-full h-full object-cover"
                       aria-label="User profile picture"
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
                       {isUploading ? (
                         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
                       ) : (
@@ -168,49 +171,46 @@ const UserProfile = () => {
                     disabled={isUploading}
                   />
                 </div>
-                <p className="mt-4 text-sm text-gray-500">
+                <p className=" text-xs font-medium text-gray-500">
                   Click to change profile picture
+                </p>
+                <p className="mt-2 font-semibold text-2xl text-center text-gray-700 flex items-center justify-center">
+                  {user?.name}
+                  {user?.kycStatus === "approved" && (
+                    <CheckCircle2
+                      className="ml-1 text-white bg-green-400 rounded-full p-"
+                      size={22}
+                    />
+                  )}
                 </p>
                 {/* KYC Status and Verification Button */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
+                  className="bg-white px-3 py-2 rounded-xl shadow-sm border border-gray-200 mb-4 mt-2"
                 >
                   <div className="flex flex-col items-center">
                     {user?.kycStatus === "approved" ? (
-                      <div className="text-green-500">KYC Approved</div>
+                      <div className="text-green-600">KYC Approved</div>
                     ) : user?.kycStatus === "rejected" ? (
-                      <div className="text-red-500">KYC Rejected</div>
+                      <div className="text-red-600">KYC Rejected</div>
+                    ) : user?.kycStatus === "pending" ? (
+                      <div className="text-yellow-600">KYC Pending</div>
                     ) : (
-                      <div className="text-yellow-500">KYC Pending</div>
+                      <div className="text-gray-500">Apply for KYC</div>
                     )}
-                    <button
-                      onClick={() => navigate(`/kyc-form/${user?._id}`)}
-                      className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-full"
-                    >
-                      {user?.kycStatus === "pending"
-                        ? "Complete KYC"
-                        : "View KYC Status"}
-                    </button>
+
+                    {(user?.kycStatus === "notApplied" ||
+                      user?.kycStatus === "rejected") && (
+                      <button
+                        onClick={() => navigate(`/kyc-form/${user?._id}`)}
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-full"
+                      >
+                        Apply for KYC Verification
+                      </button>
+                    )}
                   </div>
                 </motion.div>
-              </div>
-            </motion.div>
-
-            {/* KYC Verification Button */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mt-6"
-            >
-              <div className="flex justify-center">
-                <button
-                  onClick={handleKYCRedirect}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Complete KYC Verification
-                </button>
               </div>
             </motion.div>
           </div>

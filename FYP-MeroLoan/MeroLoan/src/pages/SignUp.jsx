@@ -23,6 +23,7 @@ const SignUp = () => {
 
     try {
       let uploadedImage = image;
+      let publicId = image;
 
       if (image) {
         // Upload image to Cloudinary
@@ -39,10 +40,19 @@ const SignUp = () => {
         );
         const data = await response.json();
         uploadedImage = data.secure_url; // Store the URL from Cloudinary
+        publicId = data.public_id; // Store the public ID from Cloudinary
       }
 
       // Send the Cloudinary image URL to the backend (image URL, not base64)
-      await signup(email, password, name, address, phone, uploadedImage);
+      await signup(
+        email,
+        password,
+        name,
+        address,
+        phone,
+        uploadedImage,
+        publicId
+      );
       navigate("/verify-email");
     } catch (error) {
       console.log(error);

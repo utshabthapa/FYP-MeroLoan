@@ -18,8 +18,8 @@ const AdminSidebar = () => {
       icon: LayoutDashboard,
     },
     {
-      path: "/userManagement",
-      name: "User Management",
+      path: "/kycApplications",
+      name: "User KYC Applications",
       icon: Users,
     },
     {
@@ -35,7 +35,7 @@ const AdminSidebar = () => {
   ];
 
   return (
-    <div className="min-h-screen w-64 bg-white border-r border-gray-200 flex flex-col">
+    <div className="min-h-screen max-h-screen w-64 bg-white border-r border-gray-200 flex flex-col">
       <div className="p-4 border-b border-gray-200">
         <h1 className="text-xl font-bold text-gray-800">Admin Portal</h1>
       </div>

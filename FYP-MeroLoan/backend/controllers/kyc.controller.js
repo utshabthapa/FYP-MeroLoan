@@ -22,11 +22,24 @@ export const submitKYC = async (req, res) => {
       identityNumber,
       issuedPlace,
       issuedDate,
-      profilePicture,
       identityCardFront,
       identityCardBack,
     } = req.body;
 
+    // Find user by userId
+    const user = await User.findById(userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    // Check if the user already has a KYC record
+    if (user.kycId) {
+      await KYC.findByIdAndDelete(user.kycId);
+    }
+
+    // Create new KYC record
     const newKYC = await KYC.create({
       userId,
       fatherName,
@@ -43,18 +56,11 @@ export const submitKYC = async (req, res) => {
       identityNumber,
       issuedPlace,
       issuedDate,
-      profilePicture,
       identityCardFront,
       identityCardBack,
     });
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
-    }
-
+    // Update user record with new KYC details
     user.kycId = newKYC._id;
     user.kycStatus = "pending";
     await user.save();
@@ -72,7 +78,7 @@ export const submitKYC = async (req, res) => {
 // Fetch all KYC requests (Admin)
 export const fetchKYCRequests = async (req, res) => {
   try {
-    const kycRequests = await KYC.find().populate("userId", "email username"); // Populate user details if needed
+    const kycRequests = await KYC.find().populate("userId", "email name"); // Populate user details if needed
     res.status(200).json({
       success: true,
       message: "KYC requests fetched successfully",
@@ -88,15 +94,13 @@ export const fetchKYCRequests = async (req, res) => {
 // Fetch single KYC request (Admin or User)
 export const fetchSingleKYCRequest = async (req, res) => {
   const { kycId } = req.params;
+  console.log("kyc id from the frontend:", kycId);
 
   try {
     let kycRequest;
     if (kycId) {
       // Admin fetching by KYC ID
-      kycRequest = await KYC.findById(kycId).populate(
-        "userId",
-        "email username"
-      );
+      kycRequest = await KYC.findById(kycId).populate("userId", "email name");
     } else if (req.userId) {
       // User fetching their own KYC (if they are the one making the request)
       kycRequest = await KYC.findOne({ userId: req.userId }).populate(

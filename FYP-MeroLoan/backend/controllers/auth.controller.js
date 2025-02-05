@@ -16,8 +16,17 @@ import path from "path";
 import cloudinary from "../utils/cloudinary.js";
 
 export const signup = async (req, res) => {
-  const { email, password, name, address, phone, image, kycStatus, kycId } =
-    req.body;
+  const {
+    email,
+    password,
+    name,
+    address,
+    phone,
+    image,
+    kycStatus,
+    kycId,
+    public_id,
+  } = req.body;
   try {
     if (!email || !password || !name || !address || !phone) {
       throw new Error("All input is required");
@@ -47,6 +56,7 @@ export const signup = async (req, res) => {
       image,
       kycStatus, // Include kycStatus here
       kycId, // Include kycId here if available
+      public_id,
       verificationToken,
       verificationTokenExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
     });
@@ -70,45 +80,39 @@ export const signup = async (req, res) => {
 };
 
 export const updateProfilePicture = async (req, res) => {
-  let { image } = req.body;
-  const { userId } = req.body;
-
   try {
-    // Fetch the user by ID from the database
-    const user = await User.findById(userId); // Find the user by ID
+    const { image, publicId } = req.body;
+    const { id } = req.params;
 
+    if (!id || !image) {
+      return res.status(400).json({ error: "User ID and image are required" });
+    }
+
+    const user = await User.findById(id);
     if (!user) {
-      console.log("User not found");
+      console.error("User not found");
       return res.status(404).json({ error: "User not found" });
     }
 
-    console.log("User before update:", user); // Log user before any changes
-
     if (image) {
-      if (user.image) {
-        // Delete the old image from Cloudinary if it exists
-        console.log("Deleting old image:", user.image); // Log old image URL
-        await cloudinary.uploader.destroy(
-          user.image.split("/").pop().split(".")[0]
-        );
+      // Delete the old image using Cloudinary public ID if it exists
+      if (user.public_id) {
+        console.log("Deleting old image:", user.public_id);
+        try {
+          const result = await cloudinary.uploader.destroy(user.public_id);
+        } catch (error) {
+          console.error("Error deleting image:", error);
+        }
       }
-
-      // Upload the new image to Cloudinary
-      const uploadedResponse = await cloudinary.uploader.upload(image);
-      image = uploadedResponse.secure_url; // Get the URL of the uploaded image
-      console.log("New image uploaded:", image); // Log the new image URL
     }
+    // Update image URL and public ID in the database
+    user.image = image; // Update with the new image URL
+    user.public_id = publicId;
 
-    user.image = image || user.image; // Update the user's image field
-    console.log("User after image update:", user); // Log user after image update
+    await user.save();
 
-    await user.save(); // Save the updated user
-
-    user.password = null; // Remove the password field before sending the response
-
-    // Log the user before sending the response to ensure it's correct
-    console.log("Updated user (sending response):", user);
-    res.status(200).json(user); // Send the updated user as a response
+    user.password = undefined; // Omit password from response
+    res.status(200).json({ user });
   } catch (err) {
     console.error("Error in updateProfilePicture:", err.message);
     res.status(500).json({ error: err.message });

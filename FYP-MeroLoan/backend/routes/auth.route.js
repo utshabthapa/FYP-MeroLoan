@@ -21,6 +21,6 @@ router.post("/logout", logout);
 router.post("/verify-email", verifyEmail);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
-router.put("/update-profile-picture", verifyToken, updateProfilePicture);
+router.put("/update-profile-picture/:id", verifyToken, updateProfilePicture);
 
 export default router;

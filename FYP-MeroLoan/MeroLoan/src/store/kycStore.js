@@ -29,19 +29,27 @@ export const useKYCStore = create((set) => ({
   },
 
   // Fetch single KYC request details for a specific user
-  fetchSingleKYCRequest: async (userId) => {
+  fetchSingleKYCRequest: async (kycId) => {
+    console.log("Fetch KYC request details for:", kycId);
+    if (!kycId) {
+      console.error("KYC ID is missing");
+      return;
+    }
+
     set({ isLoading: true, error: null });
+
     try {
-      const response = await axios.get(`${API_URL}/request/${userId}`);
+      console.log("KYC request details:", kycId);
+      const response = await axios.get(`${API_URL}/request/${kycId}`);
       set({ selectedKYC: response.data.data, isLoading: false });
     } catch (error) {
+      console.error("Error fetching KYC details:", error);
       set({
         error: error.response?.data?.message || "Failed to fetch KYC details",
         isLoading: false,
       });
     }
   },
-
   // Submit new KYC request (user-specific)
   submitKYCRequest: async (kycData) => {
     set({ isLoading: true, error: null });

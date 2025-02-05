@@ -15,6 +15,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    public_id: {
+      type: String,
+      default: "",
+    },
     name: {
       type: String,
       required: true,
@@ -45,8 +49,8 @@ const userSchema = new mongoose.Schema(
     },
     kycStatus: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
+      enum: ["notApplied", "pending", "approved", "rejected"],
+      default: "notApplied",
     },
     kycId: {
       type: mongoose.Schema.Types.ObjectId,
