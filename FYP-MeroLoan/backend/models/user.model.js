@@ -56,6 +56,12 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "KYC",
     },
+    loanIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Loan", // Reference to the Loan model
+      },
+    ],
     resetPasswordToken: String,
     resetPasswordExpiresAt: Date,
     verificationToken: String,

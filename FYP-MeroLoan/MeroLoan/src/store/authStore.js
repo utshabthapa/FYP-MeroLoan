@@ -30,7 +30,7 @@ export const useAuthStore = create((set) => ({
       });
       set({
         user: response.data.user,
-        isAuthenticated: true,
+        // isAuthenticated: true,
         isLoading: false,
       });
     } catch (error) {
@@ -65,6 +65,23 @@ export const useAuthStore = create((set) => ({
           error.response?.data?.message || "Failed to update profile picture",
         isLoading: false,
       }));
+      throw error;
+    }
+  },
+  // Update user profile information
+  updateUserProfile: async (userData, userId) => {
+    try {
+      console.log("Update user profile data:", userData);
+      const response = await axios.put(
+        `${API_URL}/update-profile/${userId}`,
+        { userData },
+        { withCredentials: true }
+      );
+      return response.data;
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "Failed to update profile";
+      console.error("Error updating profile:", errorMessage);
       throw error;
     }
   },

@@ -4,6 +4,7 @@ import { connectDB } from "./database/connectDB.js";
 import authRoutes from "./routes/auth.route.js";
 import adminRoutes from "./routes/admin.route.js";
 import kycRoutes from "./routes/kyc.route.js";
+import loanRoutes from "./routes/loan.route.js";
 
 import cookieParser from "cookie-parser";
 import path from "path";
@@ -29,6 +30,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/kyc", kycRoutes);
+app.use("/api/loan", loanRoutes);
 
 app.listen(PORT, () => {
   connectDB();

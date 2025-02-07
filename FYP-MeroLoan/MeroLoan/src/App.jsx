@@ -20,6 +20,9 @@ import "react-toastify/dist/ReactToastify.css";
 import KYCForm from "./pages/KYCForm";
 import KYCAdminPage from "./pages/KYCAdminPage";
 import KYCDetailsPage from "./pages/KYCDetailsPage";
+import LoanForm from "./pages/LoanForm";
+import LoanRequests from "./pages/LoanRequests";
+import LoanDetails from "./pages/LoanDetails";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -71,7 +74,7 @@ const RedirectAuthenticatedUser = ({ children }) => {
     return <LoadingSpinner />;
   }
   if (isAuthenticated && user.isVerified && user.role === "user") {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   if (isAuthenticated && user.isVerified && user.role === "admin") {
     return <Navigate to="/adminDashboard" replace />;
@@ -136,9 +139,11 @@ function App() {
           <Route
             path="/"
             element={
-              <ProtectedRoute>
+              // <ProtectedRoute>
+              <RedirectAuthenticatedUser>
                 <LandingPage />
-              </ProtectedRoute>
+              </RedirectAuthenticatedUser>
+              // </ProtectedRoute>
             }
           />
           <Route
@@ -212,6 +217,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <KYCForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/loan-form"
+            element={
+              <ProtectedRoute>
+                <LoanForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/loan-requests"
+            element={
+              <ProtectedRoute>
+                <LoanRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/loan-details/:loanId"
+            element={
+              <ProtectedRoute>
+                <LoanDetails />
               </ProtectedRoute>
             }
           />

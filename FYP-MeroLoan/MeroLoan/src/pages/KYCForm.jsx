@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useKYCStore } from "../store/kycStore";
 import Navbar from "@/components/Navbar";
-import { Camera, Upload, Check, AlertCircle } from "lucide-react";
+import { Camera, Upload, Check, AlertCircle, X, Loader } from "lucide-react";
 import { toast } from "react-toastify";
 
 const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dqejmq2px/image/upload";
@@ -10,10 +10,13 @@ const UPLOAD_PRESET = "KycImages_Preset";
 
 const KYCForm = () => {
   const { _id } = useParams();
-  const navigate = useNavigate(); // Initialize useNavigate
-
+  const navigate = useNavigate();
   const { submitKYCRequest, isLoading, error } = useKYCStore();
   const [activeStep, setActiveStep] = useState(1);
+  const [imagePreview, setImagePreview] = useState({
+    front: null,
+    back: null,
+  });
   const [kycData, setKycData] = useState({
     fatherName: "",
     motherName: "",
@@ -54,9 +57,31 @@ const KYCForm = () => {
     }
   };
 
+  const handleImageChange = (e, side) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview({ ...imagePreview, [side]: reader.result });
+      };
+      reader.readAsDataURL(file);
+      setKycData({
+        ...kycData,
+        [side === "front" ? "identityCardFront" : "identityCardBack"]: file,
+      });
+    }
+  };
+
+  const removeImage = (side) => {
+    setImagePreview({ ...imagePreview, [side]: null });
+    setKycData({
+      ...kycData,
+      [side === "front" ? "identityCardFront" : "identityCardBack"]: "",
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const [identityCardFrontUrl, identityCardBackUrl] = await Promise.all([
         handleImageUpload(kycData.identityCardFront),
@@ -80,12 +105,12 @@ const KYCForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-zinc-50">
       <Navbar />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 pt-36">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
-          <div className="text-center p-6 border-b border-gray-200">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <div className="text-center p-6 border-b border-zinc-200">
+            <h1 className="text-3xl font-bold text-zinc-800">
               KYC Verification
             </h1>
 
@@ -95,8 +120,8 @@ const KYCForm = () => {
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center ${
                       activeStep >= step
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 text-gray-600"
+                        ? "bg-zinc-800 text-white"
+                        : "bg-zinc-200 text-zinc-600"
                     } transition-colors duration-300`}
                   >
                     {activeStep > step ? <Check size={16} /> : step}
@@ -104,7 +129,7 @@ const KYCForm = () => {
                   {step < 3 && (
                     <div
                       className={`w-16 h-1 mx-2 ${
-                        activeStep > step ? "bg-blue-600" : "bg-gray-200"
+                        activeStep > step ? "bg-zinc-800" : "bg-zinc-200"
                       } transition-colors duration-300`}
                     />
                   )}
@@ -133,7 +158,7 @@ const KYCForm = () => {
                       name="fatherName"
                       value={kycData.fatherName}
                       onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-0 focus:ring-zinc-80000 focus:border-transparent transition duration-200"
                       required
                     />
                   </div>
@@ -146,7 +171,7 @@ const KYCForm = () => {
                       name="motherName"
                       value={kycData.motherName}
                       onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-0 focus:ring-zinc-80000 focus:border-transparent transition duration-200"
                       required
                     />
                   </div>
@@ -159,7 +184,7 @@ const KYCForm = () => {
                       name="dob"
                       value={kycData.dob}
                       onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-0 focus:ring-zinc-80000 focus:border-transparent transition duration-200"
                       required
                     />
                   </div>
@@ -171,7 +196,7 @@ const KYCForm = () => {
                       name="gender"
                       value={kycData.gender}
                       onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-0 focus:ring-zinc-80000 focus:border-transparent transition duration-200"
                       required
                     >
                       <option value="">Select Gender</option>
@@ -194,7 +219,7 @@ const KYCForm = () => {
                       name="district"
                       value={kycData.district}
                       onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-0 focus:ring-zinc-80000 focus:border-transparent transition duration-200"
                       required
                     />
                   </div>
@@ -207,7 +232,7 @@ const KYCForm = () => {
                       name="municipality"
                       value={kycData.municipality}
                       onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-0 focus:ring-zinc-80000 focus:border-transparent transition duration-200"
                       required
                     />
                   </div>
@@ -220,7 +245,7 @@ const KYCForm = () => {
                       name="ward"
                       value={kycData.ward}
                       onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-0 focus:ring-zinc-80000 focus:border-transparent transition duration-200"
                       required
                     />
                   </div>
@@ -233,7 +258,7 @@ const KYCForm = () => {
                       name="occupation"
                       value={kycData.occupation}
                       onChange={handleInputChange}
-                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:ring-0 focus:ring-zinc-80000 focus:border-transparent transition duration-200"
                       required
                     />
                   </div>
@@ -251,7 +276,7 @@ const KYCForm = () => {
                         name="identityType"
                         value={kycData.identityType}
                         onChange={handleInputChange}
-                        className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        className="w-full p-3 rounded-lg border border-gray-300 focus:ring-0 focus:ring-zinc-80000 focus:border-transparent transition duration-200"
                         required
                       >
                         <option value="">Select Identity Type</option>
@@ -269,7 +294,7 @@ const KYCForm = () => {
                         name="identityNumber"
                         value={kycData.identityNumber}
                         onChange={handleInputChange}
-                        className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        className="w-full p-3 rounded-lg border border-gray-300 focus:ring-0 focus:ring-zinc-80000 focus:border-transparent transition duration-200"
                         required
                       />
                     </div>
@@ -282,7 +307,7 @@ const KYCForm = () => {
                         name="issuedPlace"
                         value={kycData.issuedPlace}
                         onChange={handleInputChange}
-                        className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        className="w-full p-3 rounded-lg border border-gray-300 focus:ring-0 focus:ring-zinc-80000 focus:border-transparent transition duration-200"
                         required
                       />
                     </div>
@@ -295,81 +320,87 @@ const KYCForm = () => {
                         name="issuedDate"
                         value={kycData.issuedDate}
                         onChange={handleInputChange}
-                        className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                        className="w-full p-3 rounded-lg border border-gray-300 focus:ring-0 focus:ring-zinc-80000 focus:border-transparent transition duration-200"
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    {/* <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-blue-500 transition-colors duration-200">
-                      <Camera
-                        className="mx-auto text-gray-400 mb-2"
-                        size={24}
-                      />
-                      <label className="cursor-pointer">
-                        <span className="text-sm font-medium text-gray-700">
-                          Profile Picture
-                        </span>
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/*"
-                          onChange={(e) =>
-                            setKycData({
-                              ...kycData,
-                              profilePicture: e.target.files[0],
-                            })
-                          }
-                        />
-                      </label>
-                    </div> */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Front Image Upload */}
+                    <div className="relative">
+                      {imagePreview.front ? (
+                        <div className="relative">
+                          <img
+                            src={imagePreview.front}
+                            alt="ID Front"
+                            className="w-full h-48 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage("front")}
+                            className="absolute top-2 right-2 p-1 bg-zinc-800 text-white rounded-full hover:bg-zinc-700"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="p-4 border-2 border-dashed border-zinc-300 rounded-lg text-center hover:border-zinc-500 transition-colors duration-200">
+                          <Upload
+                            className="mx-auto text-zinc-400 mb-2"
+                            size={24}
+                          />
+                          <label className="cursor-pointer">
+                            <span className="text-sm font-medium text-zinc-700">
+                              ID Card (Front)
+                            </span>
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*"
+                              onChange={(e) => handleImageChange(e, "front")}
+                            />
+                          </label>
+                        </div>
+                      )}
+                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-blue-500 transition-colors duration-200">
-                        <Upload
-                          className="mx-auto text-gray-400 mb-2"
-                          size={24}
-                        />
-                        <label className="cursor-pointer">
-                          <span className="text-sm font-medium text-gray-700">
-                            ID Card (Front)
-                          </span>
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept="image/*"
-                            onChange={(e) =>
-                              setKycData({
-                                ...kycData,
-                                identityCardFront: e.target.files[0],
-                              })
-                            }
+                    {/* Back Image Upload */}
+                    <div className="relative">
+                      {imagePreview.back ? (
+                        <div className="relative">
+                          <img
+                            src={imagePreview.back}
+                            alt="ID Back"
+                            className="w-full h-48 object-cover rounded-lg"
                           />
-                        </label>
-                      </div>
-                      <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-blue-500 transition-colors duration-200">
-                        <Upload
-                          className="mx-auto text-gray-400 mb-2"
-                          size={24}
-                        />
-                        <label className="cursor-pointer">
-                          <span className="text-sm font-medium text-gray-700">
-                            ID Card (Back)
-                          </span>
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept="image/*"
-                            onChange={(e) =>
-                              setKycData({
-                                ...kycData,
-                                identityCardBack: e.target.files[0],
-                              })
-                            }
+                          <button
+                            type="button"
+                            onClick={() => removeImage("back")}
+                            className="absolute top-2 right-2 p-1 bg-zinc-800 text-white rounded-full hover:bg-zinc-700"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="p-4 border-2 border-dashed border-zinc-300 rounded-lg text-center hover:border-zinc-500 transition-colors duration-200">
+                          <Upload
+                            className="mx-auto text-zinc-400 mb-2"
+                            size={24}
                           />
-                        </label>
-                      </div>
+                          <label className="cursor-pointer">
+                            <span className="text-sm font-medium text-zinc-700">
+                              ID Card (Back)
+                            </span>
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*"
+                              onChange={(e) => handleImageChange(e, "back")}
+                            />
+                          </label>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -380,7 +411,7 @@ const KYCForm = () => {
                   <button
                     type="button"
                     onClick={() => setActiveStep(activeStep - 1)}
-                    className="px-6 py-2 text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition duration-200"
+                    className="px-6 py-2 text-zinc-800 border border-zinc-800 rounded-lg hover:bg-zinc-50 transition duration-200"
                   >
                     Previous
                   </button>
@@ -389,21 +420,18 @@ const KYCForm = () => {
                   <button
                     type="button"
                     onClick={() => setActiveStep(activeStep + 1)}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 ml-auto"
+                    className="px-6 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 transition duration-200 ml-auto"
                   >
                     Next
                   </button>
                 ) : (
                   <button
                     type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 ml-auto flex items-center"
+                    className="px-6 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 transition duration-200 ml-auto flex items-center"
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                        Processing...
-                      </>
+                      <Loader className="animate-spin mx-auto" size={24} />
                     ) : (
                       "Submit KYC"
                     )}

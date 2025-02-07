@@ -118,6 +118,46 @@ export const updateProfilePicture = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+export const updateProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userData } = req.body;
+    const { name, phone, address } = userData;
+
+    // Validate required fields
+    if (!id) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    // Find the user
+    const user = await User.findById(id);
+    if (!user) {
+      console.error("User not found");
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    console.log("User found:dfsdfdsfdsf", name, phone, address);
+    // Update user fields if they are provided
+    if (name) user.name = name;
+    if (phone) user.phone = phone;
+    if (address) user.address = address;
+
+    // Save the updated user
+    await user.save();
+
+    // Remove password from response
+    user.password = undefined;
+
+    // Send response
+    res.status(200).json({
+      user,
+      message: "Profile updated successfully",
+    });
+  } catch (err) {
+    console.error("Error in updateProfile:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
 
 export const verifyEmail = async (req, res) => {
   const { code } = req.body;

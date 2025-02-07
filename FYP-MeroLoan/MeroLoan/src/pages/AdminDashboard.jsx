@@ -55,7 +55,7 @@ const AdminDashboard = () => {
     },
     {
       title: "Total Loans",
-      value: `$${(adminStats.totalLoans / 1e6).toFixed(2)}M` || "$0M",
+      value: `${adminStats.totalLoans}` || "N/A",
       change: "+8%",
       icon: FileText,
     },
@@ -66,8 +66,8 @@ const AdminDashboard = () => {
       icon: FileText,
     },
     {
-      title: "Insurance Subs",
-      value: adminStats.totalInsuranceSubscriptions || 0,
+      title: "Total KYC Verifications",
+      value: adminStats.totalVerifiedKycs || 0,
       change: "+15%",
       icon: Shield,
     },

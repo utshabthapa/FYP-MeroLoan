@@ -1,18 +1,24 @@
 // controllers/adminController.js
 
 import { User } from "../models/user.model.js";
+import { Loan } from "../models/loan.model.js";
+import { KYC } from "../models/kyc.model.js";
 
 export const getAdminStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
-    // const totalLoans = await Loan.countDocuments();
+    const totalLoans = await Loan.countDocuments();
+    const activeLoans = await Loan.countDocuments({ status: "active" });
+    const totalVerifiedKycs = await KYC.countDocuments({ status: "approved" });
     // const totalInsuranceSubscriptions = await InsuranceSubscription.countDocuments();
 
     res.status(200).json({
       success: true,
       data: {
         totalUsers,
-        // totalLoans,
+        totalLoans,
+        activeLoans,
+        totalVerifiedKycs,
         // totalInsuranceSubscriptions,
       },
     });
