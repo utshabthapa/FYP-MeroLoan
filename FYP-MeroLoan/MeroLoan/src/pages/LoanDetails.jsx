@@ -43,20 +43,28 @@ const LoanDetails = () => {
     }
   };
 
-  // const handleEsewaPayment = async () => {
+  // const handleEsewaPayment = async (
+  //   paymentAmount,
+  //   isMilestone = false,
+  //   milestoneNumber = null
+  // ) => {
   //   if (!loan || !user) {
   //     alert("Loan or user data is missing.");
   //     return;
   //   }
 
   //   try {
-  //     const response = await initiateEsewaPayment({
+  //     const paymentDetails = {
   //       loanId: loan._id,
-  //       amount: loan.loanAmount,
+  //       amount: paymentAmount,
   //       insuranceAdded: withInsurance,
-  //       lenderId: user._id,
+  //       lenderId: isMilestone ? loan.lenderId : user._id,
   //       borrowerId: loan.userId._id,
-  //     });
+  //       isMilestonePayment: isMilestone,
+  //       milestoneNumber: milestoneNumber,
+  //     };
+
+  //     const response = await initiateEsewaPayment(paymentDetails);
 
   //     if (!response?.paymentPayload) {
   //       throw new Error("Payment payload is missing from the response.");
@@ -65,14 +73,12 @@ const LoanDetails = () => {
   //     const { paymentPayload } = response;
   //     console.log("eSewa Payment Payload:", paymentPayload);
 
-  //     // Create a hidden form
   //     const form = document.createElement("form");
   //     form.method = "POST";
   //     form.action = import.meta.env.VITE_ESEWA_PAYMENT_URL;
   //     form.enctype = "application/x-www-form-urlencoded";
   //     form.style.display = "none";
 
-  //     // Define field order explicitly
   //     const orderedFields = [
   //       "amount",
   //       "tax_amount",
@@ -122,12 +128,13 @@ const LoanDetails = () => {
         loanId: loan._id,
         amount: paymentAmount,
         insuranceAdded: withInsurance,
-        lenderId: isMilestone ? loan.lenderId : user._id,
+        lenderId: user._id,
         borrowerId: loan.userId._id,
         isMilestonePayment: isMilestone,
         milestoneNumber: milestoneNumber,
       };
 
+      // Initiate eSewa Payment
       const response = await initiateEsewaPayment(paymentDetails);
 
       if (!response?.paymentPayload) {
@@ -137,6 +144,7 @@ const LoanDetails = () => {
       const { paymentPayload } = response;
       console.log("eSewa Payment Payload:", paymentPayload);
 
+      // Create form for eSewa payment
       const form = document.createElement("form");
       form.method = "POST";
       form.action = import.meta.env.VITE_ESEWA_PAYMENT_URL;
@@ -165,6 +173,25 @@ const LoanDetails = () => {
         form.appendChild(input);
       });
 
+      // Prepare Active Contract Creation Details
+      const activeContractDetails = {
+        loan: loan._id,
+        lender: user._id,
+        borrower: loan.userId._id,
+        amount: paymentAmount,
+        insuranceAdded: withInsurance,
+        isMilestonePayment: isMilestone, // Add this field
+        transactionUuid: paymentPayload.transaction_uuid,
+        milestoneNumber: isMilestone ? milestoneNumber : null,
+      };
+
+      // Store the active contract creation details for later processing
+      localStorage.setItem(
+        "pendingActiveContract",
+        JSON.stringify(activeContractDetails)
+      );
+
+      // Submit eSewa payment form
       document.body.appendChild(form);
       form.submit();
     } catch (error) {
@@ -215,9 +242,18 @@ const LoanDetails = () => {
     const isUserLoan = user?._id === loan.userId._id;
 
     if (!isUserLoan) {
+      const isMilestonePayment = loan.repaymentType === "milestone";
+      const milestoneNumber = isMilestonePayment ? 1 : null; // Assuming the first milestone is being funded
+
       return (
         <button
-          onClick={() => handleEsewaPayment(loan.loanAmount)}
+          onClick={() =>
+            handleEsewaPayment(
+              loan.loanAmount,
+              isMilestonePayment,
+              milestoneNumber
+            )
+          }
           disabled={isProcessing}
           className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
         >
@@ -302,16 +338,18 @@ const LoanDetails = () => {
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="bg-gray-800 px-6 py-4 flex justify-between items-center">
               <h1 className="text-2xl font-bold text-white">Loan Details</h1>
-              <button
-                onClick={() => setWithInsurance(!withInsurance)}
-                className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-                  withInsurance
-                    ? "bg-white border-2 border-gray-800 text-gray-800"
-                    : "bg-gray-700 border-2 border-gray-800 text-white hover:bg-gray-600"
-                }`}
-              >
-                {withInsurance ? "✓ With Insurance" : "Add Insurance"}
-              </button>
+              {!isUserLoan && (
+                <button
+                  onClick={() => setWithInsurance(!withInsurance)}
+                  className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                    withInsurance
+                      ? "bg-white border-2 border-gray-800 text-gray-800"
+                      : "bg-gray-700 border-2 border-gray-800 text-white hover:bg-gray-600"
+                  }`}
+                >
+                  {withInsurance ? "✓ With Insurance" : "Add Insurance"}
+                </button>
+              )}
             </div>
 
             <div className="p-6 space-y-8">

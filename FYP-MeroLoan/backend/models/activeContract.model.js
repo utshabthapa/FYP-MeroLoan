@@ -1,9 +1,12 @@
-// models/ActiveContract.js
 import mongoose from "mongoose";
 
 const activeContractSchema = new mongoose.Schema(
   {
-    loan: { type: mongoose.Schema.Types.ObjectId, ref: "Loan", required: true },
+    loan: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Loan",
+      required: true,
+    },
     lender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -14,20 +17,43 @@ const activeContractSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    amount: { type: Number, required: true },
-    insuranceAdded: { type: Boolean, default: false },
+    amount: {
+      type: Number,
+      required: true,
+    },
+    insuranceAdded: {
+      type: Boolean,
+      default: false,
+    },
+    repaymentType: {
+      type: String,
+      enum: ["one_time", "milestone"],
+      required: true,
+    },
     status: {
       type: String,
-      enum: ["ACTIVE", "COMPLETED", "DEFAULTED"],
-      default: "ACTIVE",
+      enum: ["active", "completed", "defaulted"],
+      default: "active",
     },
     repaymentSchedule: [
       {
         dueDate: Date,
         amountDue: Number,
-        status: { type: String, enum: ["PENDING", "PAID"], default: "PENDING" },
+        status: {
+          type: String,
+          enum: ["pending", "paid"],
+          default: "pending",
+        },
+        milestoneNumber: Number, // This field will be set by the controller when applicable
       },
     ],
+    totalRepaymentAmount: {
+      type: Number,
+      required: true,
+    },
+    transactionId: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

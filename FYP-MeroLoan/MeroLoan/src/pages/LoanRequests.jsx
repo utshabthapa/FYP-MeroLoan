@@ -65,7 +65,7 @@ const LoanRequests = () => {
                   No pending loan requests found
                 </div>
                 <button
-                  onClick={() => navigate("/apply-loan")}
+                  onClick={() => navigate("/loan-form")}
                   className="px-6 py-3 bg-gray-800 text-white rounded-md hover:bg-gray-700 transition-colors duration-200"
                 >
                   Apply for a Loan

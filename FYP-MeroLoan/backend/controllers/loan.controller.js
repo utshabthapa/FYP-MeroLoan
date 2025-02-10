@@ -1,8 +1,6 @@
 import { User } from "../models/user.model.js";
 import { Loan } from "../models/loan.model.js";
 
-import createError from "http-errors";
-
 // Submit Loan Request
 export const submitLoanRequest = async (req, res) => {
   try {

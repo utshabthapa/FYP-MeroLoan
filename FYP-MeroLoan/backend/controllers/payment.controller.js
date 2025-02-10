@@ -6,36 +6,12 @@ import { ActiveContract } from "../models/activeContract.model.js";
 import { Loan } from "../models/loan.model.js";
 import CryptoJS from "crypto-js";
 
-// const generateSignature = (data, secret) => {
-//   console.log("Generating signature for data:", data);
-//   console.log(secret);
-//   const signatureData = `total_amount=${data.total_amount}&transaction_uuid=${data.transaction_uuid}&product_code=EPAYTEST`;
-//   // const signatureData = amount=${data.amount},transaction_uuid=${data.transactionId},product_code=${data.productCode};
-
-//   return crypto
-//     .createHmac("sha256", secret)
-//     .update(signatureData)
-//     .digest("base64");
-// };
-
 const generateSignature = (data, secret) => {
   const hashString = `total_amount=${data.total_amount},transaction_uuid=${data.transaction_uuid},product_code=${data.product_code}`;
   const hash = CryptoJS.HmacSHA256(hashString, secret);
   const hashedSignature = CryptoJS.enc.Base64.stringify(hash);
   return hashedSignature;
 };
-
-// Updated verifySignature using CryptoJS and the same string formatting
-// const verifySignature = (data, secret, signature) => {
-//   // Make sure the hash string is built exactly as in generateSignature
-//   console.log("Verify signature for data:", data);
-//   const hashString = `total_amount=${data.totalAmount},transaction_uuid=${data.transactionId},product_code=${data.productCode}`;
-//   const hash = CryptoJS.HmacSHA256(hashString, secret);
-//   const expectedSignature = CryptoJS.enc.Base64.stringify(hash);
-//   console.log("Expected Signature:", expectedSignature);
-//   console.log("Actual Signature:", signature);
-//   return expectedSignature === signature;
-// };
 
 // controllers/paymentController.js
 export const initiatePayment = async (req, res) => {
@@ -93,51 +69,6 @@ export const initiatePayment = async (req, res) => {
       .json({ message: "Payment initiation failed", error: error.message });
   }
 };
-
-// export const verifyPayment = async (req, res) => {
-//   try {
-//     // Destructure the required fields from the incoming request.
-//     // Ensure that total_amount is also provided in the request body.
-//     const { transactionId, productCode, totalAmount, signature } = req.body;
-//     console.log("Verifying transaction  with data:", {
-//       transactionId,
-//       productCode,
-//       totalAmount,
-//       signature,
-//     });
-//     // Verify the signature using the same method and string format as in generateSignature
-//     const isValid = verifySignature(
-//       { totalAmount, transactionId, productCode },
-//       process.env.ESEWA_SECRET,
-//       signature
-//     );
-
-//     if (!isValid) {
-//       return res.status(400).json({ message: "Invalid signature" });
-//     }
-
-//     // Check payment status with eSewa
-//     const response = await axios.post(process.env.ESEWA_STATUS_CHECK_URL, {
-//       merchant_id: process.env.MERCHANT_ID,
-//       transactionId,
-//     });
-
-//     if (response.data.status === "COMPLETE") {
-//       // Update transaction status in your database
-//       await Transaction.updateOne(
-//         { _id: transactionId },
-//         { status: "COMPLETED" }
-//       );
-//       return res.json({ success: true });
-//     }
-
-//     res.status(400).json({ message: "Payment verification failed" });
-//   } catch (error) {
-//     console.error("Error in verifyPayment:", error);
-//     res.status(500).json({ message: "Payment verification error" });
-//   }
-// };
-// controllers/paymentController.js
 
 export const paymentSuccess = async (req, res) => {
   try {
