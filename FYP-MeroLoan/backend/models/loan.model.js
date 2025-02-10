@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const loanSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  transactionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Transaction",
+  },
+
   loanAmount: { type: Number, required: true },
   interestRate: { type: Number, required: true },
   duration: { type: Number, required: true }, // Duration in days

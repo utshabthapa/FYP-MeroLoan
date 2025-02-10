@@ -23,6 +23,9 @@ import KYCDetailsPage from "./pages/KYCDetailsPage";
 import LoanForm from "./pages/LoanForm";
 import LoanRequests from "./pages/LoanRequests";
 import LoanDetails from "./pages/LoanDetails";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentFailure from "./pages/PaymentFailure";
+import UserLoanRequests from "./pages/UserLoanRequests";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -241,6 +244,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <LoanDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/userLoanRequests"
+            element={
+              <ProtectedRoute>
+                <UserLoanRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payment-success"
+            element={
+              <ProtectedRoute>
+                <PaymentSuccess />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payment-failure"
+            element={
+              <ProtectedRoute>
+                <PaymentFailure />
               </ProtectedRoute>
             }
           />

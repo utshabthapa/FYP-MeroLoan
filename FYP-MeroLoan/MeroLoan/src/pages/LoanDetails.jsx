@@ -3,13 +3,19 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useLoanStore } from "../store/loanStore";
 import { formatDate } from "../utils/date";
 import Navbar from "@/components/Navbar";
+import { useAuthStore } from "@/store/authStore";
+import axios from "axios";
+import { usePaymentStore } from "@/store/paymentStore";
 
 const LoanDetails = () => {
   const { loanId } = useParams();
-  const { loans } = useLoanStore();
+  const { loans, deleteLoan } = useLoanStore(); // Add deleteLoan from store
+  const [isDeleting, setIsDeleting] = useState(false);
   const [loan, setLoan] = useState(null);
   const [withInsurance, setWithInsurance] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuthStore(); // Assuming you have auth store
+  const { initiateEsewaPayment, isProcessing } = usePaymentStore(); // Use payment store
 
   useEffect(() => {
     const foundLoan = loans.find((loan) => loan._id === loanId);
@@ -19,6 +25,157 @@ const LoanDetails = () => {
       navigate("/loan-requests");
     }
   }, [loanId, loans, navigate]);
+
+  const handleDeleteLoan = async () => {
+    if (!window.confirm("Are you sure you want to delete this loan request?")) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await deleteLoan(loanId);
+      navigate("/userLoanRequests");
+    } catch (error) {
+      console.error("Failed to delete loan:", error);
+      alert("Failed to delete loan request. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // const handleEsewaPayment = async () => {
+  //   if (!loan || !user) {
+  //     alert("Loan or user data is missing.");
+  //     return;
+  //   }
+
+  //   try {
+  //     const response = await initiateEsewaPayment({
+  //       loanId: loan._id,
+  //       amount: loan.loanAmount,
+  //       insuranceAdded: withInsurance,
+  //       lenderId: user._id,
+  //       borrowerId: loan.userId._id,
+  //     });
+
+  //     if (!response?.paymentPayload) {
+  //       throw new Error("Payment payload is missing from the response.");
+  //     }
+
+  //     const { paymentPayload } = response;
+  //     console.log("eSewa Payment Payload:", paymentPayload);
+
+  //     // Create a hidden form
+  //     const form = document.createElement("form");
+  //     form.method = "POST";
+  //     form.action = import.meta.env.VITE_ESEWA_PAYMENT_URL;
+  //     form.enctype = "application/x-www-form-urlencoded";
+  //     form.style.display = "none";
+
+  //     // Define field order explicitly
+  //     const orderedFields = [
+  //       "amount",
+  //       "tax_amount",
+  //       "product_service_charge",
+  //       "product_delivery_charge",
+  //       "total_amount",
+  //       "transaction_uuid",
+  //       "product_code",
+  //       "success_url",
+  //       "failure_url",
+  //       "signed_field_names",
+  //       "signature",
+  //     ];
+
+  //     orderedFields.forEach((key) => {
+  //       const input = document.createElement("input");
+  //       input.type = "hidden";
+  //       input.name = key;
+  //       input.value = paymentPayload[key];
+  //       form.appendChild(input);
+  //     });
+
+  //     document.body.appendChild(form);
+  //     form.submit();
+  //   } catch (error) {
+  //     console.error("Payment initiation failed:", error);
+  //     alert(
+  //       `Payment initiation failed: ${
+  //         error.response?.data?.message || error.message
+  //       }\nCheck the console for details.`
+  //     );
+  //   }
+  // };
+
+  const handleEsewaPayment = async (
+    paymentAmount,
+    isMilestone = false,
+    milestoneNumber = null
+  ) => {
+    if (!loan || !user) {
+      alert("Loan or user data is missing.");
+      return;
+    }
+
+    try {
+      const paymentDetails = {
+        loanId: loan._id,
+        amount: paymentAmount,
+        insuranceAdded: withInsurance,
+        lenderId: isMilestone ? loan.lenderId : user._id,
+        borrowerId: loan.userId._id,
+        isMilestonePayment: isMilestone,
+        milestoneNumber: milestoneNumber,
+      };
+
+      const response = await initiateEsewaPayment(paymentDetails);
+
+      if (!response?.paymentPayload) {
+        throw new Error("Payment payload is missing from the response.");
+      }
+
+      const { paymentPayload } = response;
+      console.log("eSewa Payment Payload:", paymentPayload);
+
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = import.meta.env.VITE_ESEWA_PAYMENT_URL;
+      form.enctype = "application/x-www-form-urlencoded";
+      form.style.display = "none";
+
+      const orderedFields = [
+        "amount",
+        "tax_amount",
+        "product_service_charge",
+        "product_delivery_charge",
+        "total_amount",
+        "transaction_uuid",
+        "product_code",
+        "success_url",
+        "failure_url",
+        "signed_field_names",
+        "signature",
+      ];
+
+      orderedFields.forEach((key) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = paymentPayload[key];
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+    } catch (error) {
+      console.error("Payment initiation failed:", error);
+      alert(
+        `Payment initiation failed: ${
+          error.response?.data?.message || error.message
+        }\nCheck the console for details.`
+      );
+    }
+  };
 
   const getAdjustedInterestRate = () => {
     const baseRate = parseFloat(loan.interestRate);
@@ -54,6 +211,79 @@ const LoanDetails = () => {
     }
   };
 
+  const renderActionButton = () => {
+    const isUserLoan = user?._id === loan.userId._id;
+
+    if (!isUserLoan) {
+      return (
+        <button
+          onClick={() => handleEsewaPayment(loan.loanAmount)}
+          disabled={isProcessing}
+          className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
+        >
+          {isProcessing ? "Processing..." : "Lend via eSewa"}
+        </button>
+      );
+    }
+
+    if (loan.status !== "active") {
+      return (
+        <button
+          onClick={handleDeleteLoan}
+          disabled={isDeleting}
+          className="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
+        >
+          {isDeleting ? "Deleting..." : "Delete Loan Request"}
+        </button>
+      );
+    }
+
+    const repaymentSchedule = calculateRepaymentSchedule();
+    const nextUnpaidMilestone = repaymentSchedule.findIndex(
+      (payment) => !payment.paid
+    );
+
+    if (loan.repaymentType === "one-time") {
+      const totalAmount = repaymentSchedule[0].amount;
+      return (
+        <button
+          onClick={() => handleEsewaPayment(totalAmount, true)}
+          disabled={isProcessing}
+          className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
+        >
+          {isProcessing ? "Processing..." : "Pay Loan with Interest"}
+        </button>
+      );
+    } else if (nextUnpaidMilestone !== -1) {
+      return (
+        <button
+          onClick={() =>
+            handleEsewaPayment(
+              repaymentSchedule[nextUnpaidMilestone].amount,
+              true,
+              nextUnpaidMilestone + 1
+            )
+          }
+          disabled={isProcessing}
+          className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
+        >
+          {isProcessing
+            ? "Processing..."
+            : `Pay Milestone ${nextUnpaidMilestone + 1}`}
+        </button>
+      );
+    }
+
+    return (
+      <button
+        disabled
+        className="px-6 py-3 bg-gray-400 text-white rounded-md cursor-not-allowed"
+      >
+        All Payments Completed
+      </button>
+    );
+  };
+
   if (!loan) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center">
@@ -61,6 +291,8 @@ const LoanDetails = () => {
       </div>
     );
   }
+
+  const isUserLoan = user?._id === loan.userId._id;
 
   return (
     <>
@@ -70,6 +302,16 @@ const LoanDetails = () => {
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="bg-gray-800 px-6 py-4 flex justify-between items-center">
               <h1 className="text-2xl font-bold text-white">Loan Details</h1>
+              <button
+                onClick={() => setWithInsurance(!withInsurance)}
+                className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                  withInsurance
+                    ? "bg-white border-2 border-gray-800 text-gray-800"
+                    : "bg-gray-700 border-2 border-gray-800 text-white hover:bg-gray-600"
+                }`}
+              >
+                {withInsurance ? "✓ With Insurance" : "Add Insurance"}
+              </button>
             </div>
 
             <div className="p-6 space-y-8">
@@ -164,11 +406,18 @@ const LoanDetails = () => {
                           <p className="font-medium text-gray-800">
                             Rs.{payment.amount.toLocaleString()}
                           </p>
-                          <p className="text-sm text-gray-500">
-                            {loan.repaymentType === "milestone"
-                              ? `Milestone ${index + 1} of ${loan.milestones}`
-                              : "Full Payment"}
-                          </p>
+                          <div className="flex items-center space-x-2">
+                            <p className="text-sm text-gray-500">
+                              {loan.repaymentType === "milestone"
+                                ? `Milestone ${index + 1} of ${loan.milestones}`
+                                : "Full Payment"}
+                            </p>
+                            {payment.paid && (
+                              <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                                Paid
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -178,21 +427,17 @@ const LoanDetails = () => {
 
               <div className="flex justify-between">
                 <button
-                  onClick={() => navigate("/loan-requests")}
+                  onClick={() =>
+                    navigate(
+                      isUserLoan ? "/userLoanRequests" : "/loan-requests"
+                    )
+                  }
                   className="px-6 py-3 bg-gray-800 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"
                 >
-                  Back to Loan Requests
+                  {isUserLoan ? "Back to My Loans" : "Back to Loan Requests"}
                 </button>
-                <button
-                  onClick={() => setWithInsurance(!withInsurance)}
-                  className={`px-4 py-2 rounded-md transition-all duration-200 ${
-                    withInsurance
-                      ? "bg-white border-2 border-gray-800 text-gray-800"
-                      : "bg-gray-800 border-2 border-gray-800 text-white hover:bg-gray-600"
-                  }`}
-                >
-                  {withInsurance ? "✓ With Insurance" : "Add Insurance"}
-                </button>
+
+                {renderActionButton()}
               </div>
             </div>
           </div>

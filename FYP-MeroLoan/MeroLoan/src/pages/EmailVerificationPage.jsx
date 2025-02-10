@@ -49,7 +49,7 @@ const EmailVerificationPage = () => {
     const verificationCode = code.join("");
     try {
       await verifyEmail(verificationCode);
-      navigate("/");
+      navigate("/login");
       toast.success("Email verified successfully");
     } catch (error) {
       console.log(error);

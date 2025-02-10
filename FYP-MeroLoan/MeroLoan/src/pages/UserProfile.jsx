@@ -188,9 +188,9 @@ const UserProfile = () => {
           {/* Left Column */}
           <div className="space-y-6 relative">
             <motion.div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <div className="w-full h-32 absolute top-0 left-0 rounded-t-xl bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900"></div>
+              <div className="w-full h-36 absolute top-0 left-0 rounded-t-xl bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900"></div>
               <div className="flex flex-col items-center">
-                <div className="relative mt-14">
+                <div className="relative mt-12">
                   <div
                     className="w-36 h-36 rounded-full overflow-hidden border-4 border-white cursor-pointer relative"
                     onClick={handleImageClick}
@@ -236,7 +236,7 @@ const UserProfile = () => {
                 </p>
 
                 {/* KYC Status */}
-                <div className="bg-white px-3 py-2 rounded-xl shadow-sm border border-gray-200 mb-4 mt-2">
+                <div className="bg-white px-3 py-2 rounded-xl shadow-sm border border-gray-200 mb-2 mt-4">
                   <div className="flex flex-col items-center">
                     {user?.kycStatus === "approved" ? (
                       <div className="text-green-600">KYC Approved</div>

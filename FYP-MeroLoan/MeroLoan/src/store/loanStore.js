@@ -49,7 +49,7 @@ export const useLoanStore = create((set) => ({
   },
 
   // Delete a loan request
-  deleteLoanRequest: async (loanId) => {
+  deleteLoan: async (loanId) => {
     set({ isLoading: true, error: null });
     try {
       await axios.delete(`${API_URL}/delete-loan/${loanId}`);
@@ -62,6 +62,29 @@ export const useLoanStore = create((set) => ({
         error: error.response?.data?.message || "Failed to delete loan request",
         isLoading: false,
       });
+    }
+  },
+  updateLoanStatus: async (transactionId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.put(
+        `${API_URL}/update-status/${transactionId}`
+      );
+      // set((state) => ({
+      //   loans: state.loans.map((loan) =>
+      //     loan.transactionId === transactionId
+      //       ? { ...loan, status: newStatus }
+      //       : loan
+      //   ),
+      //   isLoading: false,
+      // }));
+      return response.data;
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || "Failed to update loan status",
+        isLoading: false,
+      });
+      throw error;
     }
   },
 }));
