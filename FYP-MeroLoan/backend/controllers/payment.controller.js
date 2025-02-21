@@ -5,6 +5,7 @@ import { Transaction } from "../models/transaction.model.js";
 import { ActiveContract } from "../models/activeContract.model.js";
 import { Loan } from "../models/loan.model.js";
 import CryptoJS from "crypto-js";
+import { User } from "../models/user.model.js";
 
 const generateSignature = (data, secret) => {
   const hashString = `total_amount=${data.total_amount},transaction_uuid=${data.transaction_uuid},product_code=${data.product_code}`;
@@ -25,6 +26,7 @@ export const initiatePayment = async (req, res) => {
     const totalAmount =
       amount + taxAmount + productServiceCharge + productDeliveryCharge;
 
+    const user = await User.findById(borrowerId);
     // Create transaction record
     const transaction = await Transaction.create({
       loan: loanId,
@@ -36,6 +38,8 @@ export const initiatePayment = async (req, res) => {
     });
 
     const loan = await Loan.findById(loanId);
+    user.transactionIds.push(transaction._id); // Add the newly created loan ID
+    await user.save(); // Save the updated user record
 
     loan.transactionId = transaction._id;
     await loan.save();

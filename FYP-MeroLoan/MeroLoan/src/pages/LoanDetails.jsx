@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import { useAuthStore } from "@/store/authStore";
 import axios from "axios";
 import { usePaymentStore } from "@/store/paymentStore";
+import { motion } from "framer-motion";
 
 const LoanDetails = () => {
   const { loanId } = useParams();
@@ -14,7 +15,8 @@ const LoanDetails = () => {
   const [loan, setLoan] = useState(null);
   const [withInsurance, setWithInsurance] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuthStore(); // Assuming you have auth store
+  const { user } = useAuthStore();
+  const userId = user?._id;
   const { initiateEsewaPayment, isProcessing } = usePaymentStore(); // Use payment store
 
   useEffect(() => {
@@ -42,76 +44,6 @@ const LoanDetails = () => {
       setIsDeleting(false);
     }
   };
-
-  // const handleEsewaPayment = async (
-  //   paymentAmount,
-  //   isMilestone = false,
-  //   milestoneNumber = null
-  // ) => {
-  //   if (!loan || !user) {
-  //     alert("Loan or user data is missing.");
-  //     return;
-  //   }
-
-  //   try {
-  //     const paymentDetails = {
-  //       loanId: loan._id,
-  //       amount: paymentAmount,
-  //       insuranceAdded: withInsurance,
-  //       lenderId: isMilestone ? loan.lenderId : user._id,
-  //       borrowerId: loan.userId._id,
-  //       isMilestonePayment: isMilestone,
-  //       milestoneNumber: milestoneNumber,
-  //     };
-
-  //     const response = await initiateEsewaPayment(paymentDetails);
-
-  //     if (!response?.paymentPayload) {
-  //       throw new Error("Payment payload is missing from the response.");
-  //     }
-
-  //     const { paymentPayload } = response;
-  //     console.log("eSewa Payment Payload:", paymentPayload);
-
-  //     const form = document.createElement("form");
-  //     form.method = "POST";
-  //     form.action = import.meta.env.VITE_ESEWA_PAYMENT_URL;
-  //     form.enctype = "application/x-www-form-urlencoded";
-  //     form.style.display = "none";
-
-  //     const orderedFields = [
-  //       "amount",
-  //       "tax_amount",
-  //       "product_service_charge",
-  //       "product_delivery_charge",
-  //       "total_amount",
-  //       "transaction_uuid",
-  //       "product_code",
-  //       "success_url",
-  //       "failure_url",
-  //       "signed_field_names",
-  //       "signature",
-  //     ];
-
-  //     orderedFields.forEach((key) => {
-  //       const input = document.createElement("input");
-  //       input.type = "hidden";
-  //       input.name = key;
-  //       input.value = paymentPayload[key];
-  //       form.appendChild(input);
-  //     });
-
-  //     document.body.appendChild(form);
-  //     form.submit();
-  //   } catch (error) {
-  //     console.error("Payment initiation failed:", error);
-  //     alert(
-  //       `Payment initiation failed: ${
-  //         error.response?.data?.message || error.message
-  //       }\nCheck the console for details.`
-  //     );
-  //   }
-  // };
 
   const handleEsewaPayment = async (
     paymentAmount,
@@ -334,152 +266,160 @@ const LoanDetails = () => {
     <>
       <Navbar />
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 pt-24">
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            <div className="bg-gray-800 px-6 py-4 flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-white">Loan Details</h1>
-              {!isUserLoan && (
-                <button
-                  onClick={() => setWithInsurance(!withInsurance)}
-                  className={`px-4 py-2 rounded-lg transition-all duration-200 ${
-                    withInsurance
-                      ? "bg-white border-2 border-gray-800 text-gray-800"
-                      : "bg-gray-700 border-2 border-gray-800 text-white hover:bg-gray-600"
-                  }`}
-                >
-                  {withInsurance ? "✓ With Insurance" : "Add Insurance"}
-                </button>
-              )}
-            </div>
-
-            <div className="p-6 space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                      Basic Information
-                    </h2>
-                    <div className="space-y-2">
-                      <p className="text-gray-600">
-                        <span className="font-medium">Name:</span>{" "}
-                        {loan.userId.name}
-                      </p>
-                      <p className="text-gray-600">
-                        <span className="font-medium">Email:</span>{" "}
-                        {loan.userId.email}
-                      </p>
-                      <p className="text-gray-600">
-                        <span className="font-medium">Applied On:</span>{" "}
-                        {formatDate(loan.appliedAt)}
-                      </p>
-                      <p className="text-gray-600">
-                        <span className="font-medium">Status:</span>
-                        <span className="ml-2 px-2 py-1 text-sm rounded-full bg-gray-200">
-                          {loan.status || "Pending"}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                      Loan Terms
-                    </h2>
-                    <div className="space-y-2">
-                      <p className="text-gray-600">
-                        <span className="font-medium">Amount:</span> Rs.
-                        {parseFloat(loan.loanAmount).toLocaleString()}
-                      </p>
-                      <p className="text-gray-600">
-                        <span className="font-medium">Interest Rate:</span>{" "}
-                        <span className={withInsurance ? "line-through" : ""}>
-                          {loan.interestRate}%
-                        </span>
-                        {withInsurance && (
-                          <span className="ml-2 text-gray-800">
-                            {getAdjustedInterestRate().toFixed(2)}%
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-gray-600">
-                        <span className="font-medium">Duration:</span>{" "}
-                        {loan.duration} days
-                      </p>
-                      <p className="text-gray-600">
-                        <span className="font-medium">Total Amount:</span> Rs.
-                        {(
-                          parseFloat(loan.loanAmount) +
-                          (parseFloat(loan.loanAmount) *
-                            getAdjustedInterestRate()) /
-                            100
-                        ).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="container mx-auto "
+        >
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="bg-gray-800 px-6 py-4 flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-white">Loan Details</h1>
+                {!isUserLoan && (
+                  <button
+                    onClick={() => setWithInsurance(!withInsurance)}
+                    className={`px-4 py-2 rounded-lg transition-all duration-200 ${
+                      withInsurance
+                        ? "bg-white border-2 border-gray-800 text-gray-800"
+                        : "bg-gray-700 border-2 border-gray-800 text-white hover:bg-gray-600"
+                    }`}
+                  >
+                    {withInsurance ? "✓ With Insurance" : "Add Insurance"}
+                  </button>
+                )}
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                  Repayment Schedule
-                </h2>
-                <div className="space-y-4">
-                  {calculateRepaymentSchedule().map((payment, index) => (
-                    <div
-                      key={index}
-                      className="bg-white p-4 rounded-md shadow-sm border border-gray-100"
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-medium text-gray-800">
-                            Payment {index + 1}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            Due: {formatDate(payment.date)}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium text-gray-800">
-                            Rs.{payment.amount.toLocaleString()}
-                          </p>
-                          <div className="flex items-center space-x-2">
-                            <p className="text-sm text-gray-500">
-                              {loan.repaymentType === "milestone"
-                                ? `Milestone ${index + 1} of ${loan.milestones}`
-                                : "Full Payment"}
+              <div className="p-6 space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                        Basic Information
+                      </h2>
+                      <div className="space-y-2">
+                        <p className="text-gray-600">
+                          <span className="font-medium">Name:</span>{" "}
+                          {loan.userId.name}
+                        </p>
+                        <p className="text-gray-600">
+                          <span className="font-medium">Email:</span>{" "}
+                          {loan.userId.email}
+                        </p>
+                        <p className="text-gray-600">
+                          <span className="font-medium">Applied On:</span>{" "}
+                          {formatDate(loan.appliedAt)}
+                        </p>
+                        <p className="text-gray-600">
+                          <span className="font-medium">Status:</span>
+                          <span className="ml-2 px-2 py-1 text-sm rounded-full bg-gray-200">
+                            {loan.status || "Pending"}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                        Loan Terms
+                      </h2>
+                      <div className="space-y-2">
+                        <p className="text-gray-600">
+                          <span className="font-medium">Amount:</span> Rs.
+                          {parseFloat(loan.loanAmount).toLocaleString()}
+                        </p>
+                        <p className="text-gray-600">
+                          <span className="font-medium">Interest Rate:</span>{" "}
+                          <span className={withInsurance ? "line-through" : ""}>
+                            {loan.interestRate}%
+                          </span>
+                          {withInsurance && (
+                            <span className="ml-2 text-gray-800">
+                              {getAdjustedInterestRate().toFixed(2)}%
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-gray-600">
+                          <span className="font-medium">Duration:</span>{" "}
+                          {loan.duration} days
+                        </p>
+                        <p className="text-gray-600">
+                          <span className="font-medium">Total Amount:</span> Rs.
+                          {(
+                            parseFloat(loan.loanAmount) +
+                            (parseFloat(loan.loanAmount) *
+                              getAdjustedInterestRate()) /
+                              100
+                          ).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                    Repayment Schedule
+                  </h2>
+                  <div className="space-y-4">
+                    {calculateRepaymentSchedule().map((payment, index) => (
+                      <div
+                        key={index}
+                        className="bg-white p-4 rounded-md shadow-sm border border-gray-100"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="font-medium text-gray-800">
+                              Payment {index + 1}
                             </p>
-                            {payment.paid && (
-                              <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                                Paid
-                              </span>
-                            )}
+                            <p className="text-sm text-gray-600">
+                              Due: {formatDate(payment.date)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium text-gray-800">
+                              Rs.{payment.amount.toLocaleString()}
+                            </p>
+                            <div className="flex items-center space-x-2">
+                              <p className="text-sm text-gray-500">
+                                {loan.repaymentType === "milestone"
+                                  ? `Milestone ${index + 1} of ${
+                                      loan.milestones
+                                    }`
+                                  : "Full Payment"}
+                              </p>
+                              {payment.paid && (
+                                <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                                  Paid
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex justify-between">
-                <button
-                  onClick={() =>
-                    navigate(
-                      isUserLoan ? "/userLoanRequests" : "/loan-requests"
-                    )
-                  }
-                  className="px-6 py-3 bg-gray-800 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"
-                >
-                  {isUserLoan ? "Back to My Loans" : "Back to Loan Requests"}
-                </button>
+                <div className="flex justify-between">
+                  <button
+                    onClick={() =>
+                      navigate(
+                        isUserLoan ? "/userLoanRequests" : "/loan-requests"
+                      )
+                    }
+                    className="px-6 py-3 bg-gray-800 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"
+                  >
+                    {isUserLoan ? "Back to My Loans" : "Back to Loan Requests"}
+                  </button>
 
-                {renderActionButton()}
+                  {renderActionButton()}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </>
   );

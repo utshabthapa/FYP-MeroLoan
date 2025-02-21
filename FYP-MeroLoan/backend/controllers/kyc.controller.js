@@ -5,7 +5,7 @@ import createError from "http-errors";
 // Submit KYC (with file uploads)
 export const submitKYC = async (req, res) => {
   try {
-    console.log("Request body:", req.body);
+    // console.log("Request body:", req.body);
     const {
       userId,
       fatherName,

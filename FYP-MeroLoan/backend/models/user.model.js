@@ -62,6 +62,18 @@ const userSchema = new mongoose.Schema(
         ref: "Loan", // Reference to the Loan model
       },
     ],
+    transactionIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Transaction", // Reference to the Loan model
+      },
+    ],
+    activeContractIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ActiveContract", // Reference to the Loan model
+      },
+    ],
     resetPasswordToken: String,
     resetPasswordExpiresAt: Date,
     verificationToken: String,

@@ -1,12 +1,14 @@
 import express from "express";
 import dotenv from "dotenv";
 import { connectDB } from "./database/connectDB.js";
+
 import authRoutes from "./routes/auth.route.js";
 import adminRoutes from "./routes/admin.route.js";
 import kycRoutes from "./routes/kyc.route.js";
 import loanRoutes from "./routes/loan.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import activeContractRoutes from "./routes/activeContract.route.js";
+import userDashboardRoutes from "./routes/userDashboard.route.js";
 
 import cookieParser from "cookie-parser";
 import path from "path";
@@ -35,6 +37,8 @@ app.use("/api/kyc", kycRoutes);
 app.use("/api/loan", loanRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/active-contracts", activeContractRoutes);
+
+app.use("/api/userDashboard", userDashboardRoutes);
 
 app.listen(PORT, () => {
   connectDB();
