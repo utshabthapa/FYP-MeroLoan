@@ -132,12 +132,13 @@ export const verifyKYC = async (req, res) => {
   const { kycId, status } = req.body;
 
   try {
+    // Update KYC status
     const kyc = await KYC.findByIdAndUpdate(kycId, { status }, { new: true });
     if (!kyc) {
       return res.status(404).json({ success: false, message: "KYC not found" });
     }
 
-    const userStatus = status === "approved" ? "approved" : "rejected";
+    // Find the user associated with the KYC
     const user = await User.findById(kyc.userId);
     if (!user) {
       return res
@@ -145,8 +146,19 @@ export const verifyKYC = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
-    user.kycStatus = userStatus; // Update user's KYC status
-    await user.save(); // Save the updated user
+    // Update user's KYC status
+    const userStatus = status === "approved" ? "approved" : "rejected";
+    user.kycStatus = userStatus;
+
+    // Update user's creditScore based on KYC status
+    if (status === "approved") {
+      user.creditScore = Math.min(user.creditScore + 2, 100); // Increase by 2, but cap at 100
+    } else if (status === "rejected") {
+      user.creditScore = Math.max(user.creditScore - 2, 0); // Decrease by 2, but not below 0
+    }
+
+    // Save the updated user
+    await user.save();
 
     res.status(200).json({
       success: true,

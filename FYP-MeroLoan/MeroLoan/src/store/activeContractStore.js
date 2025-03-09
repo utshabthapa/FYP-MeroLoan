@@ -43,11 +43,12 @@ export const useActiveContractStore = create((set) => ({
       const response = await axios.get(`${API_URL}/user/${userId}`);
 
       set({
-        activeContracts: response.data,
+        activeContracts: response.data.data,
         isProcessing: false,
       });
 
       return response.data;
+      console.log(response.data);
     } catch (error) {
       set({
         error:

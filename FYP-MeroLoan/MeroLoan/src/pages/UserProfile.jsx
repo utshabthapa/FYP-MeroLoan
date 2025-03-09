@@ -1,15 +1,16 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuthStore } from "../store/authStore";
+import { useActiveContractStore } from "../store/activeContractStore"; // Import the store
 import {
   Camera,
   CheckCircle,
-  FileText,
   CreditCard,
   CheckCircle2,
   Edit2,
-  X,
   Save,
+  ArrowUpRight,
+  ArrowDownRight,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { toast } from "react-toastify";
@@ -17,24 +18,54 @@ import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import defaultUser from "../assets/userProfile.png";
 
-const ActivityItem = ({ icon: Icon, title, description, date }) => (
-  <div className="flex items-start space-x-4 p-4 hover:bg-gray-50 rounded-lg transition-colors">
-    <div className="rounded-full p-2 bg-gray-100">
-      <Icon className="w-5 h-5 text-gray-600" />
-    </div>
-    <div className="flex-1">
-      <h4 className="font-semibold text-gray-900">{title}</h4>
-      <p className="text-gray-600 text-sm">{description}</p>
-    </div>
-    <span className="text-sm text-gray-500">{date}</span>
-  </div>
-);
+const LoanItem = ({ loan, userId, onClick }) => {
+  const isLender = loan.lender === userId;
+  const formattedAmount = parseFloat(loan.amount).toLocaleString();
 
-ActivityItem.propTypes = {
-  icon: PropTypes.elementType.isRequired,
-  title: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
-  date: PropTypes.string.isRequired,
+  return (
+    <div
+      className="flex items-start space-x-4 p-4 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer border border-gray-100 mb-3"
+      onClick={onClick}
+    >
+      <div className="rounded-full p-2 bg-gray-100">
+        {isLender ? (
+          <ArrowUpRight className="w-5 h-5 text-orange-600" />
+        ) : (
+          <ArrowDownRight className="w-5 h-5 text-green-600" />
+        )}
+      </div>
+      <div className="flex-1">
+        <h4 className="font-semibold text-gray-900">
+          {isLender ? "Loan Given" : "Loan Received"}
+        </h4>
+        <p className="text-gray-600 text-sm">
+          Rs. {formattedAmount} {isLender ? "to receive" : "to repay"}
+        </p>
+      </div>
+      <div className="flex flex-col items-end">
+        <span
+          className={`px-2 py-1 text-xs rounded-full ${
+            loan.status === "ACTIVE"
+              ? "bg-green-100 text-green-800"
+              : loan.status === "COMPLETED"
+              ? "bg-blue-100 text-blue-800"
+              : "bg-yellow-100 text-yellow-800"
+          }`}
+        >
+          {loan.status}
+        </span>
+        <span className="text-sm text-gray-500 mt-1">
+          Total: Rs. {parseFloat(loan.totalRepaymentAmount).toLocaleString()}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+LoanItem.propTypes = {
+  loan: PropTypes.object.isRequired,
+  userId: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired,
 };
 
 const EditableField = ({
@@ -71,16 +102,43 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const { user, updateProfilePicture, logout, updateUserProfile } =
     useAuthStore();
+  
+  // Use the active contract store
+  const { 
+    activeContracts, 
+    fetchActiveContracts, 
+    isProcessing: isLoading, 
+    error 
+  } = useActiveContractStore();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       setEditedUser({
         name: user.name,
         phone: user.phone || "+977 9841234567",
         address: user.address || "Kathmandu, Nepal",
       });
+
+      // Fetch active contracts using the store
+      const loadContracts = async () => {
+        try {
+          await fetchActiveContracts(user._id);
+
+        } catch (error) {
+          toast.error("Failed to load active loans");
+        }
+      };
+
+      loadContracts();
     }
-  }, [user]);
+  }, [user, fetchActiveContracts]);
+
+  // Show error toast if there's an error from the store
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   const handleLogout = () => {
     logout();
@@ -135,7 +193,7 @@ const UserProfile = () => {
   };
 
   const handleSaveProfile = async () => {
-    if (editedUser.phone.length !== 10) {
+    if (editedUser.phone && editedUser.phone.length !== 10) {
       toast.error("Phone number must be exactly 10 digits.");
       return;
     }
@@ -145,8 +203,6 @@ const UserProfile = () => {
       return;
     }
     try {
-      console.log("Profile saved...", userId);
-      console.log("Saving profile...", editedUser);
       await updateUserProfile(editedUser, userId);
       setIsEditing(false);
       toast.success("Profile updated successfully!");
@@ -155,31 +211,14 @@ const UserProfile = () => {
     }
   };
 
-  const recentActivity = [
-    {
-      icon: CheckCircle,
-      title: "Loan Application Approved",
-      description: "Your loan application #12345 has been approved",
-      date: "2 days ago",
-    },
-    {
-      icon: FileText,
-      title: "Documents Updated",
-      description: "You updated your verification documents",
-      date: "5 days ago",
-    },
-    {
-      icon: CreditCard,
-      title: "Loan Payment",
-      description: "Monthly payment of NPR 25,000 completed",
-      date: "1 week ago",
-    },
-  ];
+  const navigateToLoanDetails = (loanId) => {
+    navigate(`/loan-details/${loanId}`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="max-w-7xl mx-auto  pt-28">
+      <div className="max-w-7xl mx-auto pt-28">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -304,6 +343,38 @@ const UserProfile = () => {
                   )}
                 </button>
               </div>
+
+              {/* Credit Score Card - Positioned at the top for prominence */}
+              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+                <div className="flex justify-between items-center">
+                  <span className="text-xl font-medium text-gray-700">
+                    Credit Score
+                  </span>
+                  <div className="flex items-center">
+                    <span className="text-2xl font-bold text-indigo-600">
+                      {user?.creditScore}
+                    </span>
+                    <span className="ml-2 text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                      {user?.creditScore >= 90
+                        ? "Excellent"
+                        : user?.creditScore >= 80
+                        ? "Very Good"
+                        : user?.creditScore >= 70
+                        ? "Good"
+                        : user?.creditScore >= 60
+                        ? "Fair"
+                        : user?.creditScore >= 50
+                        ? " Average"
+                        : user?.creditScore >= 40
+                        ? "Below Average"
+                        : user?.creditScore >= 30
+                        ? "Poor"
+                        : "Very Poor"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-6">
                 <EditableField
                   label="Full Name"
@@ -332,7 +403,6 @@ const UserProfile = () => {
                     }
                   }}
                 />
-
                 <EditableField
                   label="Address"
                   value={editedUser.address}
@@ -344,17 +414,43 @@ const UserProfile = () => {
               </div>
             </motion.div>
 
+            {/* Active Loans Section (Replacing Recent Activity) */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
             >
-              <h2 className="text-xl font-semibold mb-6">Recent Activity</h2>
-              <div className="space-y-2">
-                {recentActivity.map((activity, index) => (
-                  <ActivityItem key={index} {...activity} />
-                ))}
-              </div>
+              <h2 className="text-xl font-semibold mb-6">Active Loans</h2>
+
+              {isLoading ? (
+                <div className="py-8 flex justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-800"></div>
+                </div>
+              ) : activeContracts.length > 0 ? (
+                <div className="space-y-2">
+                  {activeContracts.map((contract) => (
+                    <LoanItem
+                      key={contract._id}
+                      loan={contract}
+                      userId={user._id}
+                      onClick={() => navigateToLoanDetails(contract.loan)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-gray-50 rounded-lg p-8 text-center">
+                  <CreditCard className="mx-auto h-12 w-12 text-gray-400 mb-3" />
+                  <p className="text-gray-600">
+                    You don't have any active loans at the moment.
+                  </p>
+                  <button
+                    onClick={() => navigate("/loan-requests")}
+                    className="mt-4 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    Browse Loan Requests
+                  </button>
+                </div>
+              )}
             </motion.div>
           </div>
         </motion.div>

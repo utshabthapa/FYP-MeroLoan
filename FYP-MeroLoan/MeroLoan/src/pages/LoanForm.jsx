@@ -5,11 +5,14 @@ import { formatDate } from "../utils/date";
 import Navbar from "@/components/Navbar";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom"; // React Router for Vite-based projects
 
 const LoanForm = () => {
   const { submitLoanRequest, deleteLoanRequest } = useLoanStore();
   const { user } = useAuthStore();
   const userId = user?._id;
+  const kycStatus = user?.kycStatus || "notApplied";
+  const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
   const [loanData, setLoanData] = useState({
@@ -20,6 +23,25 @@ const LoanForm = () => {
     repaymentType: "one-time",
     milestones: 2,
   });
+
+  const isKycApproved = kycStatus === "approved";
+
+  const getKycStatusMessage = () => {
+    switch (kycStatus) {
+      case "notApplied":
+        return "You haven't applied for KYC verification yet. Please complete your KYC to apply for a loan.";
+      case "pending":
+        return "Your KYC verification is pending. Please wait for approval before applying for a loan.";
+      case "rejected":
+        return "Your KYC verification was rejected. Please update your KYC information to apply for a loan.";
+      default:
+        return "";
+    }
+  };
+
+  const redirectToProfile = () => {
+    navigate("/userProfile");
+  };
 
   const calculateRepaymentSchedule = () => {
     const amount = parseFloat(loanData.loanAmount);
@@ -65,6 +87,11 @@ const LoanForm = () => {
       return;
     }
 
+    if (!isKycApproved) {
+      toast.error("KYC verification is required to submit a loan request.");
+      return;
+    }
+
     try {
       await submitLoanRequest(loanData);
       toast.success("Loan application submitted successfully!");
@@ -97,7 +124,30 @@ const LoanForm = () => {
           className="container mx-auto "
         >
           <div className="max-w-3xl mx-auto">
-            {step === 1 ? (
+            {!isKycApproved ? (
+              <div className="bg-white rounded-lg shadow-lg p-8 transition-all duration-300">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                    KYC Verification Required
+                  </h2>
+                  <div className="my-8 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <p className="text-yellow-700 mb-4">
+                      {getKycStatusMessage()}
+                    </p>
+                    <button
+                      onClick={redirectToProfile}
+                      className="bg-gray-800 text-white py-3 px-6 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"
+                    >
+                      {kycStatus === "notApplied"
+                        ? "Apply for KYC"
+                        : kycStatus === "pending"
+                        ? "Check KYC Status"
+                        : "Update KYC Information"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : step === 1 ? (
               <div className="bg-white rounded-lg shadow-lg p-8 transition-all duration-300">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">
                   Apply for a Loan

@@ -74,6 +74,12 @@ const userSchema = new mongoose.Schema(
         ref: "ActiveContract", // Reference to the Loan model
       },
     ],
+    creditScore: {
+      type: Number,
+      default: 50,
+      min: 0, // Ensures the credit score is not less than 0
+      max: 100, // Ensures the credit score is not more than 100
+    },
     resetPasswordToken: String,
     resetPasswordExpiresAt: Date,
     verificationToken: String,
