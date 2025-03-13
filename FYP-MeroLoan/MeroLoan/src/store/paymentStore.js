@@ -40,6 +40,59 @@ export const usePaymentStore = create((set) => ({
     }
   },
 
+  // Initiate eSewa repayment for borrowers
+  initiateRepayment: async (repaymentData) => {
+    set({ isProcessing: true, error: null });
+    try {
+      const {
+        loanId,
+        amount,
+        isMilestonePayment,
+        milestoneNumber,
+        borrowerId,
+        lenderId,
+      } = repaymentData;
+
+      // Create repayment transaction record
+      const response = await axios.post(`${API_URL}/initiate-repayment`, {
+        loanId,
+        amount,
+        isMilestonePayment,
+        milestoneNumber,
+        borrowerId,
+        lenderId,
+      });
+
+      // Return the payment payload for form submission
+      return response.data;
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || "Repayment initiation failed",
+        isProcessing: false,
+      });
+      throw error;
+    }
+  },
+
+  // Repayment success: call the repayment-success endpoint to update the active contract and payment status
+  repaymentSuccess: async (transactionId) => {
+    set({ isProcessing: true, error: null });
+    try {
+      const response = await axios.get(`${API_URL}/repayment-success`, {
+        params: { transaction_uuid: transactionId },
+      });
+      set({ isProcessing: false });
+      return response.data;
+    } catch (error) {
+      set({
+        error:
+          error.response?.data?.message ||
+          "Repayment success processing failed",
+        isProcessing: false,
+      });
+      throw error;
+    }
+  },
   // Verify payment status
   // stores/paymentStore.js
   verifyPayment: async (transactionId, productCode, signature, totalAmount) => {

@@ -3,6 +3,7 @@ import { Loan } from "../models/loan.model.js";
 import { User } from "../models/user.model.js";
 
 // Create Active Contract
+
 export const createActiveContract = async (req, res) => {
   try {
     const {
@@ -32,6 +33,7 @@ export const createActiveContract = async (req, res) => {
         message: "Loan not found",
       });
     }
+
     const user = await User.findById(borrower);
 
     // Determine repayment type
@@ -68,11 +70,16 @@ export const createActiveContract = async (req, res) => {
       repaymentSchedule,
     });
 
-    user.activeContractIds.push(newActiveContract._id); // Add the newly created loan ID
-    // Update loan status
+    // Update the loan with the new active contract ID
+    loan.activeContract = newActiveContract._id;
     loan.status = "active";
-    await user.save(); // Save the updated user record
+
+    // Update the user's activeContractIds
+    user.activeContractIds.push(newActiveContract._id);
+
+    // Save the updated loan and user records
     await loan.save();
+    await user.save();
 
     res.status(201).json({
       success: true,

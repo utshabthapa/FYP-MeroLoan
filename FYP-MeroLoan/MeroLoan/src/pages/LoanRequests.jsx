@@ -17,15 +17,15 @@ const LoanRequests = () => {
     navigate(`/loan-details/${loanId}`);
   };
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="bg-white p-6 rounded-lg shadow-lg text-gray-800">
-          <p className="text-lg">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center">
+  //       <div className="bg-white p-6 rounded-lg shadow-lg text-gray-800">
+  //         <p className="text-lg">{error} hskdhfk</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   // Filter loans with status "not active"
   const filteredLoans = loans.filter((loan) => loan.status === "not active");
@@ -114,17 +114,6 @@ const LoanRequests = () => {
 
                       <div className="mt-4 flex justify-between items-center">
                         <div className="flex items-center space-x-2">
-                          {/* <span
-                          className={`px-3 py-1 rounded-full text-sm ${
-                            loan.status === "approved"
-                              ? "bg-gray-800 text-white"
-                              : loan.status === "rejected"
-                              ? "bg-gray-200 text-gray-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {loan.status || "Pending"}
-                        </span> */}
                           <span className="text-sm text-gray-500">
                             {loan.repaymentType === "milestone"
                               ? `${loan.milestones} Milestones`

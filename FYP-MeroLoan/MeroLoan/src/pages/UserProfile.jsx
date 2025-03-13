@@ -102,13 +102,13 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const { user, updateProfilePicture, logout, updateUserProfile } =
     useAuthStore();
-  
+
   // Use the active contract store
-  const { 
-    activeContracts, 
-    fetchActiveContracts, 
-    isProcessing: isLoading, 
-    error 
+  const {
+    activeContracts,
+    fetchActiveContracts,
+    isProcessing: isLoading,
+    error,
   } = useActiveContractStore();
 
   useEffect(() => {
@@ -123,7 +123,6 @@ const UserProfile = () => {
       const loadContracts = async () => {
         try {
           await fetchActiveContracts(user._id);
-
         } catch (error) {
           toast.error("Failed to load active loans");
         }
@@ -347,9 +346,51 @@ const UserProfile = () => {
               {/* Credit Score Card - Positioned at the top for prominence */}
               <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
                 <div className="flex justify-between items-center">
-                  <span className="text-xl font-medium text-gray-700">
-                    Credit Score
-                  </span>
+                  <div className="flex items-center">
+                    <span className="text-xl font-medium text-gray-700">
+                      Credit Score
+                    </span>
+                    <div className="relative ml-2 group">
+                      <div className="w-5 h-5 rounded-full bg-green-200 flex items-center justify-center cursor-help text-gray-900 text-xs font-bold">
+                        ?
+                      </div>
+                      <div className="absolute left-0  mb-2 w-64 bg-white p-3 rounded-lg shadow-lg border border-gray-200 invisible group-hover:visible transition-all z-10">
+                        <h4 className="font-semibold text-gray-800 text-sm mb-2">
+                          How Credit Score Works
+                        </h4>
+                        <ul className="text-xs text-gray-600 space-y-1 list-disc pl-4">
+                          <li>
+                            Timely loan repayments increase your score by 2
+                            points
+                          </li>
+                          <li>Late payments decrease your score by 3 points</li>
+                          <li>
+                            Successfully completing loans adds 5 bonus points
+                          </li>
+                          <li>
+                            Defaulting on loans reduces score by 10 points
+                          </li>
+                          <li>New users start with a base score of 50</li>
+                          <li>Maximum attainable score is 100</li>
+                        </ul>
+                        <div className="mt-2 text-xs">
+                          <p className="font-medium text-gray-700">
+                            Score Ranges:
+                          </p>
+                          <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-1">
+                            <span>90-100: Excellent</span>
+                            <span>80-89: Very Good</span>
+                            <span>70-79: Good</span>
+                            <span>60-69: Fair</span>
+                            <span>50-59: Average</span>
+                            <span>40-49: Below Average</span>
+                            <span>30-39: Poor</span>
+                            <span>0-29: Very Poor</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <div className="flex items-center">
                     <span className="text-2xl font-bold text-indigo-600">
                       {user?.creditScore}
@@ -364,7 +405,7 @@ const UserProfile = () => {
                         : user?.creditScore >= 60
                         ? "Fair"
                         : user?.creditScore >= 50
-                        ? " Average"
+                        ? "Average"
                         : user?.creditScore >= 40
                         ? "Below Average"
                         : user?.creditScore >= 30

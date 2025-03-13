@@ -26,6 +26,7 @@ import LoanDetails from "./pages/LoanDetails";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentFailure from "./pages/PaymentFailure";
 import UserLoanRequests from "./pages/UserLoanRequests";
+import RepaymentSuccess from "./pages/RepaymentSuccess";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -260,6 +261,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <PaymentSuccess />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/repayment-success"
+            element={
+              <ProtectedRoute>
+                <RepaymentSuccess />
               </ProtectedRoute>
             }
           />

@@ -1,23 +1,26 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { usePaymentStore } from "../store/paymentStore";
-import { useActiveContractStore } from "../store/activeContractStore"; // New store
-import { CheckCircle, DollarSign, Home, User, Layers } from "lucide-react";
+import {
+  CheckCircle,
+  DollarSign,
+  Home,
+  User,
+  Layers,
+  BarChart,
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
 
-const PaymentSuccess = () => {
+const RepaymentSuccess = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [transactionDetails, setTransactionDetails] = React.useState(null);
-  const [contractCreationStatus, setContractCreationStatus] =
+  const [repaymentProcessingStatus, setRepaymentProcessingStatus] =
     React.useState(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [retryCount, setRetryCount] = React.useState(0);
-  const paymentSuccess = usePaymentStore((state) => state.paymentSuccess);
-  const createActiveContract = useActiveContractStore(
-    (state) => state.createActiveContract
-  );
+  const repaymentSuccess = usePaymentStore((state) => state.repaymentSuccess);
 
   const decodeBase64 = (str) => {
     try {
@@ -33,112 +36,96 @@ const PaymentSuccess = () => {
   };
 
   React.useEffect(() => {
-    const processTransaction = async () => {
+    const processRepayment = async () => {
       setIsLoading(true);
 
       try {
         const params = new URLSearchParams(location.search);
+        const encodedData = params.get("data");
 
-        // First try to get the direct transaction_uuid parameter
-        let transactionId = params.get("transaction_uuid");
-        let totalAmount = params.get("total_amount");
+        if (!encodedData) {
+          setError("Missing transaction data");
+          setIsLoading(false);
+          return;
+        }
 
-        // If not found, try the encoded data approach
-        if (!transactionId) {
-          const encodedData = params.get("data");
-          if (encodedData) {
-            try {
-              const decodedString = decodeBase64(encodedData);
-              const decodedData = JSON.parse(decodedString);
-              transactionId = decodedData.transaction_uuid;
-              totalAmount = decodedData.total_amount;
-            } catch (parseError) {
-              console.error("Data parsing error:", parseError);
-            }
+        let decodedData;
+        try {
+          const decodedString = decodeBase64(encodedData);
+          decodedData = JSON.parse(decodedString);
+        } catch (parseError) {
+          console.error("Data parsing error:", parseError);
+
+          // Check if we have direct query parameters as fallback
+          const transactionId = params.get("transaction_uuid");
+          const totalAmount = params.get("total_amount");
+          const loanId = params.get("loanId");
+
+          if (transactionId) {
+            decodedData = {
+              transaction_uuid: transactionId,
+              total_amount: totalAmount || "N/A",
+              loanId: loanId,
+            };
+          } else {
+            throw new Error("Failed to parse transaction data");
           }
         }
 
+        const transactionId = decodedData.transaction_uuid;
+        const totalAmount = decodedData.total_amount;
+        const loanId = decodedData.loanId;
+
         if (!transactionId) {
-          // Log all available parameters to see what's actually being sent
-          console.log(
-            "All URL parameters:",
-            Object.fromEntries(params.entries())
-          );
           throw new Error("Missing transaction ID in response data");
         }
 
-        // Process payment success - ignore "Loan not found" errors
+        // Process repayment success
         try {
-          await paymentSuccess(transactionId);
-        } catch (paymentError) {
-          console.log("Payment success API error:", paymentError);
+          const repaymentResult = await repaymentSuccess(transactionId);
+
+          // Check if all milestones are paid
+          if (repaymentResult.allMilestonesPaid) {
+            setRepaymentProcessingStatus("fully-paid");
+          } else {
+            setRepaymentProcessingStatus("partial-paid");
+          }
+
+          setTransactionDetails({
+            transactionId,
+            totalAmount,
+            loanId: repaymentResult.loanId || loanId,
+            activeContractId: repaymentResult.activeContractId,
+          });
+        } catch (repaymentError) {
+          console.log("Repayment success API error:", repaymentError);
+
           // If the error is "Loan not found" but we have transaction details, continue
           if (
-            paymentError.message?.includes("Loan not found") &&
+            repaymentError.message?.includes("Loan not found") &&
             transactionId
           ) {
             console.log("Continuing despite 'Loan not found' error");
-            // We'll continue with the transaction ID we have
+            setRepaymentProcessingStatus("loan-not-found");
+            setTransactionDetails({
+              transactionId,
+              totalAmount,
+              loanId,
+            });
           } else {
-            throw paymentError; // Rethrow if it's a different error
+            throw repaymentError; // Rethrow if it's a different error
           }
         }
-
-        // Retrieve and process pending active contract
-        const pendingContractJson = localStorage.getItem(
-          "pendingActiveContract"
-        );
-
-        if (pendingContractJson) {
-          try {
-            const pendingContract = JSON.parse(pendingContractJson);
-
-            // Add transaction details to the contract creation payload
-            pendingContract.transactionId = transactionId;
-
-            // Create active contract
-            const activeContract = await createActiveContract(pendingContract);
-
-            // Clear the pending contract from localStorage
-            localStorage.removeItem("pendingActiveContract");
-
-            setContractCreationStatus("success");
-          } catch (contractError) {
-            console.error("Contract creation error:", contractError);
-
-            // Check if this is a "loan not found" error
-            if (
-              contractError.message?.includes("Loan not found") &&
-              retryCount < 3
-            ) {
-              // We'll retry after a delay since the payment might still be processing
-              console.log(
-                `Retrying contract creation (${retryCount + 1}/3)...`
-              );
-              setRetryCount((prevCount) => prevCount + 1);
-              setTimeout(() => processTransaction(), 2000); // Retry after 2 seconds
-              return; // Exit this attempt
-            }
-
-            setContractCreationStatus("error");
-            // Don't redirect - still show payment success
-          }
-        }
-
-        setTransactionDetails({
-          transactionId,
-          totalAmount,
-        });
 
         setIsLoading(false);
       } catch (error) {
-        console.error("Error processing transaction:", error);
+        console.error("Error processing repayment:", error);
 
         // Special handling for "Loan not found" errors
         if (error.message?.includes("Loan not found") && retryCount < 3) {
-          console.log(`Transaction processing retry (${retryCount + 1}/3)...`);
+          console.log(`Repayment processing retry (${retryCount + 1}/3)...`);
           setRetryCount((prevCount) => prevCount + 1);
-          setTimeout(() => processTransaction(), 2000); // Retry after 2 seconds
+          setTimeout(() => processRepayment(), 2000); // Retry after 2 seconds
           return;
         }
 
@@ -153,25 +140,25 @@ const PaymentSuccess = () => {
             transactionId: transactionId.substring(0, 20) + "...", // Truncate if it's the encoded data
             totalAmount: params.get("total_amount") || "Amount processing",
           });
-          setContractCreationStatus("loan-not-found");
+          setRepaymentProcessingStatus("loan-not-found");
           setIsLoading(false);
           return;
         }
 
-        setError(error.message || "Payment processing error");
+        setError(error.message || "Repayment processing error");
         setIsLoading(false);
       }
     };
 
-    processTransaction();
-  }, [location.search, paymentSuccess, createActiveContract, retryCount]);
+    processRepayment();
+  }, [location.search, repaymentSuccess, retryCount]);
 
   // Only navigate to failure page if we're not loading, have an error, and
   // exceeded retries with no transaction details
   React.useEffect(() => {
     if (!isLoading && error && retryCount >= 3 && !transactionDetails) {
       navigate("/payment-failure", {
-        state: { message: error },
+        state: { message: error, isRepayment: true },
       });
     }
   }, [isLoading, error, navigate, retryCount, transactionDetails]);
@@ -213,10 +200,10 @@ const PaymentSuccess = () => {
               />
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Processing Payment
+                  Processing Repayment
                 </h1>
                 <p className="text-gray-600">
-                  Please wait while we process your payment details.
+                  Please wait while we process your repayment details.
                 </p>
                 <RetryIndicator />
               </div>
@@ -232,27 +219,31 @@ const PaymentSuccess = () => {
               />
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Payment Successful
+                  Repayment Successful
                 </h1>
                 <p className="text-gray-600 mb-4">
-                  Your payment has been processed successfully.
+                  Your repayment has been processed successfully.
                 </p>
-                {contractCreationStatus === "success" && (
+
+                {repaymentProcessingStatus === "fully-paid" && (
                   <div className="bg-green-100 rounded-lg p-3 mb-4">
                     <p className="text-green-700">
-                      Active contract created successfully
+                      Congratulations! All repayments completed. Your loan is
+                      now fully paid.
                     </p>
                   </div>
                 )}
-                {contractCreationStatus === "error" && (
-                  <div className="bg-yellow-100 rounded-lg p-3 mb-4">
-                    <p className="text-yellow-700">
-                      Payment successful, but there was an issue creating the
-                      contract.
+
+                {repaymentProcessingStatus === "partial-paid" && (
+                  <div className="bg-blue-100 rounded-lg p-3 mb-4">
+                    <p className="text-blue-700">
+                      Payment recorded successfully. You have remaining
+                      repayments on your schedule.
                     </p>
                   </div>
                 )}
-                {contractCreationStatus === "loan-not-found" && (
+
+                {repaymentProcessingStatus === "loan-not-found" && (
                   <div className="bg-yellow-100 rounded-lg p-3 mb-4">
                     <p className="text-yellow-700">
                       Payment successful, but we couldn't find the associated
@@ -260,6 +251,7 @@ const PaymentSuccess = () => {
                     </p>
                   </div>
                 )}
+
                 <div className="bg-gray-100 rounded-lg p-4 space-y-2">
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-700">
@@ -291,9 +283,9 @@ const PaymentSuccess = () => {
                   onClick={() => navigate("/userProfile")}
                 />
                 <NavigationButton
-                  icon={Layers}
-                  label="Loans"
-                  onClick={() => navigate("/loan-requests")}
+                  icon={BarChart}
+                  label="Repayments"
+                  onClick={() => navigate("/repayments")}
                 />
               </div>
             </div>
@@ -308,7 +300,7 @@ const PaymentSuccess = () => {
                   Waiting for Data
                 </h1>
                 <p className="text-gray-600">
-                  We're waiting for your payment details to arrive.
+                  We're waiting for your repayment details to arrive.
                 </p>
               </div>
             </div>
@@ -319,4 +311,4 @@ const PaymentSuccess = () => {
   );
 };
 
-export default PaymentSuccess;
+export default RepaymentSuccess;

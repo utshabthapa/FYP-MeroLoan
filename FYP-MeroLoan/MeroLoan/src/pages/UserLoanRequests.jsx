@@ -1,10 +1,11 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLoanStore } from "../store/loanStore";
-import Navbar from "@/components/Navbar";
 import { formatDate } from "../utils/date";
 import { useAuthStore } from "../store/authStore"; // Assuming you have an auth store
 import { motion } from "framer-motion";
+
+import Navbar from "@/components/navbar";
 
 const UserLoanRequests = () => {
   const { loans, isLoading, error, fetchLoans } = useLoanStore();
@@ -19,15 +20,15 @@ const UserLoanRequests = () => {
     navigate(`/loan-details/${loanId}`);
   };
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="bg-white p-6 rounded-lg shadow-lg text-gray-800">
-          <p className="text-lg">{error}</p>
-        </div>
-      </div>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center">
+  //       <div className="bg-white p-6 rounded-lg shadow-lg text-gray-800">
+  //         <p className="text-lg">{error}</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   // Filter loans for current user
   const userLoans = loans.filter((loan) => loan.userId._id === user?._id);

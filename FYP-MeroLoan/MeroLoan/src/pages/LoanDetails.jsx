@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { act, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLoanStore } from "../store/loanStore";
 import { formatDate } from "../utils/date";
@@ -17,7 +17,8 @@ const LoanDetails = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const userId = user?._id;
-  const { initiateEsewaPayment, isProcessing } = usePaymentStore(); // Use payment store
+  const { initiateEsewaPayment, initiateRepayment, isProcessing } =
+    usePaymentStore(); // Use payment store
 
   useEffect(() => {
     const foundLoan = loans.find((loan) => loan._id === loanId);
@@ -136,6 +137,95 @@ const LoanDetails = () => {
     }
   };
 
+  // New function to handle repayments by borrowers
+  const handleRepayment = async (
+    paymentAmount,
+    isMilestone = false,
+    milestoneNumber = null
+  ) => {
+    if (!loan || !user) {
+      alert("Loan or user data is missing.");
+      return;
+    }
+
+    try {
+      const repaymentDetails = {
+        loanId: loan._id,
+        amount: paymentAmount,
+        borrowerId: user._id,
+        lenderId: loan.activeContract?.lender || null, // Get lender from active contract if available
+        isMilestonePayment: isMilestone,
+        milestoneNumber: milestoneNumber,
+      };
+
+      // Initiate eSewa Payment for repayment
+      const response = await initiateRepayment(repaymentDetails);
+
+      if (!response?.paymentPayload) {
+        throw new Error("Payment payload is missing from the response.");
+      }
+
+      const { paymentPayload } = response;
+      console.log("eSewa Repayment Payload:", paymentPayload);
+
+      // Create form for eSewa payment
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = import.meta.env.VITE_ESEWA_PAYMENT_URL;
+      form.enctype = "application/x-www-form-urlencoded";
+      form.style.display = "none";
+
+      const orderedFields = [
+        "amount",
+        "tax_amount",
+        "product_service_charge",
+        "product_delivery_charge",
+        "total_amount",
+        "transaction_uuid",
+        "product_code",
+        "success_url",
+        "failure_url",
+        "signed_field_names",
+        "signature",
+      ];
+
+      orderedFields.forEach((key) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = paymentPayload[key];
+        form.appendChild(input);
+      });
+
+      // Prepare Repayment Details
+      const repaymentProcessDetails = {
+        loan: loan._id,
+        borrower: user._id,
+        lender: loan.activeContract?.lender || null,
+        amount: paymentAmount,
+        isMilestonePayment: isMilestone,
+        transactionUuid: paymentPayload.transaction_uuid,
+        milestoneNumber: isMilestone ? milestoneNumber : null,
+      };
+
+      // Store the repayment details for later processing
+      localStorage.setItem(
+        "pendingRepayment",
+        JSON.stringify(repaymentProcessDetails)
+      );
+
+      // Submit eSewa payment form
+      document.body.appendChild(form);
+      form.submit();
+    } catch (error) {
+      console.error("Repayment initiation failed:", error);
+      alert(
+        `Repayment initiation failed: ${
+          error.response?.data?.message || error.message
+        }\nCheck the console for details.`
+      );
+    }
+  };
   const getAdjustedInterestRate = () => {
     const baseRate = parseFloat(loan.interestRate);
     return withInsurance ? baseRate - baseRate * 0.15 : baseRate;
@@ -170,6 +260,8 @@ const LoanDetails = () => {
     }
   };
 
+  // Update the renderActionButton function to use handleRepayment instead of handleEsewaPayment
+  // for borrower repayments
   const renderActionButton = () => {
     const isUserLoan = user?._id === loan.userId._id;
 
@@ -206,16 +298,40 @@ const LoanDetails = () => {
       );
     }
 
+    // Handle borrower repayment actions for active loans
     const repaymentSchedule = calculateRepaymentSchedule();
-    const nextUnpaidMilestone = repaymentSchedule.findIndex(
-      (payment) => !payment.paid
-    );
 
-    if (loan.repaymentType === "one-time") {
-      const totalAmount = repaymentSchedule[0].amount;
+    // Find the active contract to get actual repayment schedule
+    // Find the active contract to get actual repayment schedule
+    const activeContract = loan.activeContract;
+
+    // Debugging logs
+    console.log("Loan:", loan);
+    console.log("Active Contract:", activeContract);
+    console.log("Repayment Schedule:", activeContract?.repaymentSchedule);
+
+    // Handle case where activeContract or repaymentSchedule is missing
+    if (!activeContract || !activeContract.repaymentSchedule) {
       return (
         <button
-          onClick={() => handleEsewaPayment(totalAmount, true)}
+          disabled
+          className="px-6 py-3 bg-gray-400 text-white rounded-md cursor-not-allowed"
+        >
+          No Active Contract Found
+        </button>
+      );
+    }
+    const nextUnpaidMilestone =
+      activeContract?.repaymentSchedule.findIndex(
+        (payment) => payment.status === "pending"
+      ) ?? -1;
+
+    if (loan.repaymentType === "one-time") {
+      const totalAmount =
+        activeContract?.totalRepaymentAmount || repaymentSchedule[0].amount;
+      return (
+        <button
+          onClick={() => handleRepayment(totalAmount, false)}
           disabled={isProcessing}
           className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
         >
@@ -223,14 +339,14 @@ const LoanDetails = () => {
         </button>
       );
     } else if (nextUnpaidMilestone !== -1) {
+      const milestoneAmount =
+        activeContract?.repaymentSchedule[nextUnpaidMilestone].amountDue ||
+        repaymentSchedule[nextUnpaidMilestone]?.amount;
+
       return (
         <button
           onClick={() =>
-            handleEsewaPayment(
-              repaymentSchedule[nextUnpaidMilestone].amount,
-              true,
-              nextUnpaidMilestone + 1
-            )
+            handleRepayment(milestoneAmount, true, nextUnpaidMilestone + 1)
           }
           disabled={isProcessing}
           className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
