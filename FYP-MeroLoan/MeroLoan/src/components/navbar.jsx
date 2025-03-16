@@ -42,7 +42,7 @@ const Navbar = () => {
                   <a href="/loan-requests">Loan Requests</a>
                 </li>
                 <li>
-                  <a href="/dashboard">Transaction History</a>
+                  <a href="/transactionHistory">Transaction History</a>
                 </li>
                 <li>
                   <a href="/dashboard">Notifications</a>

@@ -27,6 +27,8 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentFailure from "./pages/PaymentFailure";
 import UserLoanRequests from "./pages/UserLoanRequests";
 import RepaymentSuccess from "./pages/RepaymentSuccess";
+import LoanApplicationDetail from "./pages/LoanApplicationDetail";
+import TransactionHistory from "./pages/TransactionHistory";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -133,6 +135,14 @@ function App() {
             }
           />
           <Route
+            path="/loanApplicationDetails/:loanId"
+            element={
+              <AdminRoute>
+                <LoanApplicationDetail />
+              </AdminRoute>
+            }
+          />
+          <Route
             path="/insuranceReview"
             element={
               <AdminRoute>
@@ -163,6 +173,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <UserProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/transactionHistory"
+            element={
+              <ProtectedRoute>
+                <TransactionHistory />
               </ProtectedRoute>
             }
           />

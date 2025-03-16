@@ -9,6 +9,7 @@ import loanRoutes from "./routes/loan.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import activeContractRoutes from "./routes/activeContract.route.js";
 import userDashboardRoutes from "./routes/userDashboard.route.js";
+import transactionRoutes from "./routes/transaction.route.js";
 
 import cookieParser from "cookie-parser";
 import path from "path";
@@ -37,8 +38,8 @@ app.use("/api/kyc", kycRoutes);
 app.use("/api/loan", loanRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/active-contracts", activeContractRoutes);
-
 app.use("/api/userDashboard", userDashboardRoutes);
+app.use("/api/transaction", transactionRoutes);
 
 app.listen(PORT, () => {
   connectDB();
