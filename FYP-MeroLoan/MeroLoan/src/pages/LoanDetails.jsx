@@ -265,9 +265,10 @@ const LoanDetails = () => {
   const renderActionButton = () => {
     const isUserLoan = user?._id === loan.userId._id;
 
+    // For lenders viewing someone else's loan
     if (!isUserLoan) {
       const isMilestonePayment = loan.repaymentType === "milestone";
-      const milestoneNumber = isMilestonePayment ? 1 : null; // Assuming the first milestone is being funded
+      const milestoneNumber = isMilestonePayment ? 1 : null;
 
       return (
         <button
@@ -286,12 +287,19 @@ const LoanDetails = () => {
       );
     }
 
-    if (loan.status !== "active") {
+    // For borrowers viewing their own loan
+    if (loan.status === "completed") {
+      return (
+        <div className="px-6 py-3 bg-green-100 text-green-800 rounded-md font-medium border border-green-200 text-center">
+          Loan Completed
+        </div>
+      );
+    } else if (loan.status !== "active") {
       return (
         <button
           onClick={handleDeleteLoan}
           disabled={isDeleting}
-          className="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
+          className="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-rlassNa focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
         >
           {isDeleting ? "Deleting..." : "Delete Loan Request"}
         </button>

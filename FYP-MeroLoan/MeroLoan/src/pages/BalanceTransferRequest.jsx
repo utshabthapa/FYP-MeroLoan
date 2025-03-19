@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useTransactionStore } from "../store/transactionStore"; // Update this path to match your file structure
 import { motion } from "framer-motion";
-import Navbar from "../components/Navbar";
-import { useAuthStore } from "../store/authStore"; // Update this path to match your file structure
+import AdminSidebar from "@/components/AdminSidebar";
+import { useTransactionStore } from "../store/transactionStore"; // Update path as needed
 
 const TransactionStatus = ({ status }) => {
   const getStatusColor = () => {
@@ -27,17 +26,33 @@ const TransactionStatus = ({ status }) => {
   );
 };
 
-const TransactionHistory = () => {
-  const { transactions, isLoading, error, fetchUserTransactions } =
-    useTransactionStore();
-  const { user } = useAuthStore();
-  const [transactionType, setTransactionType] = useState("all");
+const BalanceTransferRequest = () => {
+  const {
+    adminTransactions,
+    isLoading,
+    error,
+    fetchAdminTransactions,
+    updateAdminTransfer,
+  } = useTransactionStore();
+  const [activeTab, setActiveTab] = useState("pending");
+  const [notification, setNotification] = useState({
+    show: false,
+    message: "",
+    type: "",
+  });
+  const [refreshKey, setRefreshKey] = useState(0);
 
+  // Fetch transactions when component mounts or when refresh key changes
   useEffect(() => {
-    if (user?._id) {
-      fetchUserTransactions(user._id);
-    }
-  }, [fetchUserTransactions, user]);
+    fetchAdminTransactions();
+  }, [fetchAdminTransactions, refreshKey]);
+
+  // Re-fetch data when switching tabs
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    // Force a refetch when switching tabs
+    setRefreshKey((prevKey) => prevKey + 1);
+  };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -48,99 +63,91 @@ const TransactionHistory = () => {
     });
   };
 
-  // Make sure transactions is an array before filtering
-  const transactionsArray = Array.isArray(transactions) ? transactions : [];
+  const handleTransfer = async (transactionId) => {
+    try {
+      await updateAdminTransfer(transactionId);
 
-  const filteredTransactions = transactionsArray.filter((transaction) => {
-    if (transactionType === "all") return true;
-    if (transactionType === "lent")
-      return transaction.lender?._id === user?._id;
-    if (transactionType === "borrowed")
-      return transaction.borrower?._id === user?._id;
-    return true;
+      // Trigger a refetch of the data
+      setRefreshKey((prevKey) => prevKey + 1);
+
+      setNotification({
+        show: true,
+        message: "Balance transfer successfully marked as transferred",
+        type: "success",
+      });
+      setTimeout(
+        () => setNotification({ show: false, message: "", type: "" }),
+        3000
+      );
+    } catch (error) {
+      setNotification({
+        show: true,
+        message:
+          error.response?.data?.message || "Failed to update transfer status",
+        type: "error",
+      });
+      setTimeout(
+        () => setNotification({ show: false, message: "", type: "" }),
+        3000
+      );
+    }
+  };
+
+  // Filter transactions based on active tab
+  const filteredTransactions = adminTransactions.filter((transaction) => {
+    if (activeTab === "pending") return !transaction.adminTransfer;
+    return transaction.adminTransfer;
   });
-
-  const getTransactionTypeLabel = (transaction) => {
-    if (transaction.type === "REPAYMENT") {
-      return "Repaid to";
-    }
-    if (transaction.lender?._id === user?._id) {
-      return "Lent to";
-    } else if (transaction.borrower?._id === user?._id) {
-      return "Borrowed from";
-    }
-    return "Transaction with";
-  };
-
-  const getCounterparty = (transaction) => {
-    if (transaction.lender?._id === user?._id) {
-      return transaction.borrower?.name || "Unknown";
-    } else if (transaction.borrower?._id === user?._id) {
-      return transaction.lender?.name || "Unknown";
-    }
-    return "Unknown";
-  };
-
-  // Function to check and log the actual structure of transactions data
-  const debugData = () => {
-    console.log("Transactions data:", transactions);
-    console.log("Is array:", Array.isArray(transactions));
-    console.log("User ID:", user?._id);
-  };
-
-  // Call this in development to help diagnose issues
-  useEffect(() => {
-    if (transactions) {
-      debugData();
-    }
-  }, [transactions]);
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="max-w-7xl mx-auto pt-28 px-4 sm:px-6 lg:px-8">
+      <div className="flex min-h-screen bg-gray-100">
+        <div className="fixed h-screen">
+          <AdminSidebar />
+        </div>
+        <div className="flex-1 p-8 ml-64">
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="container mx-auto"
+            className="w-full"
           >
+            {notification.show && (
+              <div
+                className={`mb-4 p-4 rounded-md ${
+                  notification.type === "success"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-red-100 text-red-800"
+                }`}
+              >
+                {notification.message}
+              </div>
+            )}
+
             <div className="bg-white shadow rounded-lg overflow-hidden">
               <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
                 <h2 className="text-lg font-medium text-gray-900">
-                  Transaction History
+                  Balance Transfer Requests
                 </h2>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setTransactionType("all")}
+                    onClick={() => handleTabChange("pending")}
                     className={`px-3 py-1 text-sm rounded-md ${
-                      transactionType === "all"
+                      activeTab === "pending"
                         ? "bg-blue-600 text-white"
                         : "bg-gray-100 text-gray-700"
                     }`}
                   >
-                    All
+                    Pending
                   </button>
                   <button
-                    onClick={() => setTransactionType("lent")}
+                    onClick={() => handleTabChange("transferred")}
                     className={`px-3 py-1 text-sm rounded-md ${
-                      transactionType === "lent"
+                      activeTab === "transferred"
                         ? "bg-blue-600 text-white"
                         : "bg-gray-100 text-gray-700"
                     }`}
                   >
-                    Lent
-                  </button>
-                  <button
-                    onClick={() => setTransactionType("borrowed")}
-                    className={`px-3 py-1 text-sm rounded-md ${
-                      transactionType === "borrowed"
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    Borrowed
+                    Transferred
                   </button>
                 </div>
               </div>
@@ -153,7 +160,11 @@ const TransactionHistory = () => {
                 <div className="p-4 text-center text-red-500">{error}</div>
               ) : filteredTransactions.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
-                  No transactions found.
+                  No{" "}
+                  {activeTab === "pending"
+                    ? "pending transfers"
+                    : "transferred transactions"}{" "}
+                  found.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -164,10 +175,10 @@ const TransactionHistory = () => {
                           Date
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Type
+                          Lender
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          With
+                          Borrower
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Amount
@@ -178,6 +189,11 @@ const TransactionHistory = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
                         </th>
+                        {activeTab === "pending" && (
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Action
+                          </th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -186,11 +202,11 @@ const TransactionHistory = () => {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {formatDate(transaction.createdAt)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {getTransactionTypeLabel(transaction)}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {transaction.lender?.name || "Unknown"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {getCounterparty(transaction)}
+                            {transaction.borrower?.name || "Unknown"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             ${transaction.amount}
@@ -201,6 +217,16 @@ const TransactionHistory = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <TransactionStatus status={transaction.status} />
                           </td>
+                          {activeTab === "pending" && (
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <button
+                                onClick={() => handleTransfer(transaction._id)}
+                                className="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md"
+                              >
+                                Transfer
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -215,4 +241,4 @@ const TransactionHistory = () => {
   );
 };
 
-export default TransactionHistory;
+export default BalanceTransferRequest;

@@ -28,8 +28,8 @@ const AdminSidebar = () => {
       icon: FileText,
     },
     {
-      path: "/insuranceReview",
-      name: "Insurance",
+      path: "/balanceTransferRequests",
+      name: "Transfer Requests",
       icon: Shield,
     },
   ];

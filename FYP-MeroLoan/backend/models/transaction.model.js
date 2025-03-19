@@ -21,6 +21,11 @@ const transactionSchema = new mongoose.Schema(
       enum: ["PENDING", "COMPLETED", "FAILED"],
       default: "PENDING",
     },
+    type: {
+      type: String,
+      enum: ["LENDING", "REPAYMENT"], // Two possible values
+    },
+    adminTransfer: { type: Boolean, default: false }, // New field added
   },
   { timestamps: true }
 );

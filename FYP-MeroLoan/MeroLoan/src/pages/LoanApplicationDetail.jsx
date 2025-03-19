@@ -185,13 +185,11 @@ const LoanApplicationDetail = () => {
                       <div>
                         <p className="text-gray-600">
                           <span className="font-medium">Lender:</span>{" "}
-                          {loan.activeContract.lender?.name ||
-                            loan.activeContract.lender ||
-                            "Unknown"}
+                          {loan.activeContract.lender?.name || "Unknown"}
                         </p>
                         <p className="text-gray-600">
                           <span className="font-medium">Created On:</span>{" "}
-                          {formatDate(loan.activeContract.createdAt)}
+                          {formatDate(loan.activeContract?.createdAt)}
                         </p>
                       </div>
                       <div>

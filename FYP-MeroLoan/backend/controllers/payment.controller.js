@@ -1,122 +1,3 @@
-// // controllers/paymentController.js
-// import crypto from "crypto";
-// import axios from "axios";
-// import { Transaction } from "../models/transaction.model.js";
-// import { ActiveContract } from "../models/activeContract.model.js";
-// import { Loan } from "../models/loan.model.js";
-// import CryptoJS from "crypto-js";
-// import { User } from "../models/user.model.js";
-
-// const generateSignature = (data, secret) => {
-//   const hashString = `total_amount=${data.total_amount},transaction_uuid=${data.transaction_uuid},product_code=${data.product_code}`;
-//   const hash = CryptoJS.HmacSHA256(hashString, secret);
-//   const hashedSignature = CryptoJS.enc.Base64.stringify(hash);
-//   return hashedSignature;
-// };
-
-// // controllers/paymentController.js
-// export const initiatePayment = async (req, res) => {
-//   try {
-//     const { amount, loanId, insuranceAdded, lenderId, borrowerId } = req.body;
-
-//     // Calculate total amount based on eSewa requirements
-//     const taxAmount = 10;
-//     const productServiceCharge = 0;
-//     const productDeliveryCharge = 0;
-//     const totalAmount =
-//       amount + taxAmount + productServiceCharge + productDeliveryCharge;
-
-//     const user = await User.findById(borrowerId);
-//     // Create transaction record
-//     const transaction = await Transaction.create({
-//       loan: loanId,
-//       amount,
-//       lender: lenderId,
-//       borrower: borrowerId,
-//       insuranceAdded,
-//       status: "PENDING",
-//     });
-
-//     const loan = await Loan.findById(loanId);
-//     user.transactionIds.push(transaction._id); // Add the newly created loan ID
-//     await user.save(); // Save the updated user record
-
-//     loan.transactionId = transaction._id;
-//     await loan.save();
-
-//     // Prepare eSewa payload
-//     const payload = {
-//       amount: amount.toString(),
-//       tax_amount: taxAmount.toString(),
-//       product_service_charge: productServiceCharge.toString(),
-//       product_delivery_charge: productDeliveryCharge.toString(),
-//       total_amount: totalAmount.toString(),
-//       transaction_uuid: transaction._id.toString(),
-//       product_code: process.env.MERCHANT_ID,
-//       // success_url: `${process.env.CLIENT_URL}/payment-success`,
-//       // failure_url: `${process.env.CLIENT_URL}/payment-failure`,
-//       success_url: "http://localhost:5173/payment-success",
-//       failure_url: "http://localhost:5173/payment-failure",
-//       signed_field_names: "total_amount,transaction_uuid,product_code",
-//     };
-
-//     // Generate signature
-//     payload.signature = generateSignature(payload, process.env.ESEWA_SECRET);
-
-//     // Return the payment payload for form submission
-//     console.log("eSewa Payload:", payload);
-//     res.json({ paymentPayload: payload });
-//   } catch (error) {
-//     console.error("Error in initiatePayment:", error);
-//     res
-//       .status(500)
-//       .json({ message: "Payment initiation failed", error: error.message });
-//   }
-// };
-
-// export const paymentSuccess = async (req, res) => {
-//   try {
-//     // eSewa should pass back the transaction id.
-//     // Depending on eSewa’s implementation, this might be in req.query or req.body.
-//     const { transaction_uuid } = req.query;
-//     if (!transaction_uuid) {
-//       return res.status(400).json({ message: "Missing transaction id" });
-//     }
-
-//     // Find the corresponding transaction
-//     const transaction = await Transaction.findById(transaction_uuid);
-//     if (!transaction) {
-//       return res.status(404).json({ message: "Transaction not found" });
-//     }
-
-//     // Update the transaction status to SUCCESS
-//     transaction.status = "COMPLETED";
-//     await transaction.save();
-
-//     // Update the associated loan status to active
-//     const loan = await Loan.findById(transaction.loan);
-//     if (!loan) {
-//       return res.status(404).json({ message: "Loan not found" });
-//     }
-//     loan.status = "active";
-//     await loan.save();
-
-//     // Optionally, you can redirect to your client’s payment success page:
-//     // res.redirect(`${process.env.CLIENT_URL}/payment-success`);
-
-//     // Or send a JSON response:
-//     res.json({ message: "Payment successful. Loan activated." });
-//   } catch (error) {
-//     console.error("Error in paymentSuccess:", error);
-//     res.status(500).json({
-//       message: "Error processing payment success",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// controllers/paymentController.js
-
 // controllers/paymentController.js
 import crypto from "crypto";
 import axios from "axios";
@@ -125,6 +6,8 @@ import { ActiveContract } from "../models/activeContract.model.js";
 import { Loan } from "../models/loan.model.js";
 import CryptoJS from "crypto-js";
 import { User } from "../models/user.model.js";
+import { Notification } from "../models/notification.model.js"; // Import the Notification model
+import { io } from "../index.js"; // Import the `io` instance for real-time notifications
 
 const generateSignature = (data, secret) => {
   const hashString = `total_amount=${data.total_amount},transaction_uuid=${data.transaction_uuid},product_code=${data.product_code}`;
@@ -220,9 +103,49 @@ export const paymentSuccess = async (req, res) => {
       lender: loan.pendingRepaymentDetails.lenderId,
       borrower: loan.pendingRepaymentDetails.borrowerId,
       insuranceAdded: loan.pendingRepaymentDetails.insuranceAdded,
-      status: "COMPLETED",
+      status: "PENDING",
+      type: "LENDING",
     });
 
+    // Fetch lender and borrower details
+    const lender = await User.findById(loan.pendingRepaymentDetails.lenderId);
+    const borrower = await User.findById(
+      loan.pendingRepaymentDetails.borrowerId
+    );
+
+    // Notification for Lender
+    const lenderNotification = new Notification({
+      userId: loan.pendingRepaymentDetails.lenderId,
+      message: `Your transaction has been processed. You will be notified as soon as it gets verified.`,
+      timestamp: new Date(),
+    });
+    await lenderNotification.save();
+
+    // Emit real-time notification to the lender
+    io.to(loan.pendingRepaymentDetails.lenderId.toString()).emit(
+      "newNotification",
+      {
+        message: lenderNotification.message,
+        timestamp: lenderNotification.timestamp,
+      }
+    );
+
+    // Notification for Borrower
+    const borrowerNotification = new Notification({
+      userId: loan.pendingRepaymentDetails.borrowerId,
+      message: `${lender.name} just lent you $${loan.pendingRepaymentDetails.amount}. Your loan contract is active now. Repay the loan on time.`,
+      timestamp: new Date(),
+    });
+    await borrowerNotification.save();
+
+    // Emit real-time notification to the borrower
+    io.to(loan.pendingRepaymentDetails.borrowerId.toString()).emit(
+      "newNotification",
+      {
+        message: borrowerNotification.message,
+        timestamp: borrowerNotification.timestamp,
+      }
+    );
     // Update user to add transaction ID
     const user = await User.findById(loan.pendingRepaymentDetails.borrowerId);
     if (user) {
@@ -403,7 +326,8 @@ export const repaymentSuccess = async (req, res) => {
       borrower: loan.pendingRepaymentDetails.borrowerId,
       lender: loan.pendingRepaymentDetails.lenderId,
       // type: "repayment",
-      status: "COMPLETED",
+      status: "PENDING",
+      type: "REPAYMENT",
     });
 
     // Update the repayment schedule in the active contract
@@ -440,6 +364,46 @@ export const repaymentSuccess = async (req, res) => {
 
     // Save the updated active contract
     await activeContract.save();
+
+    // Fetch lender and borrower details
+    const lender = await User.findById(loan.pendingRepaymentDetails.lenderId);
+    const borrower = await User.findById(
+      loan.pendingRepaymentDetails.borrowerId
+    );
+
+    // Notification for Borrower
+    const borrowerNotification = new Notification({
+      userId: loan.pendingRepaymentDetails.borrowerId,
+      message: `Your repayment transaction has been processed. You will be notified as soon as it gets verified.`,
+      timestamp: new Date(),
+    });
+    await borrowerNotification.save();
+
+    // Emit real-time notification to the borrower
+    io.to(loan.pendingRepaymentDetails.borrowerId.toString()).emit(
+      "newNotification",
+      {
+        message: borrowerNotification.message,
+        timestamp: borrowerNotification.timestamp,
+      }
+    );
+
+    // Notification for Lender
+    const lenderNotification = new Notification({
+      userId: loan.pendingRepaymentDetails.lenderId,
+      message: `You got repaid $${loan.pendingRepaymentDetails.amount} by ${borrower.name}.`,
+      timestamp: new Date(),
+    });
+    await lenderNotification.save();
+
+    // Emit real-time notification to the lender
+    io.to(loan.pendingRepaymentDetails.lenderId.toString()).emit(
+      "newNotification",
+      {
+        message: lenderNotification.message,
+        timestamp: lenderNotification.timestamp,
+      }
+    );
 
     // Update user to add transaction ID
     const user = await User.findById(loan.pendingRepaymentDetails.borrowerId);

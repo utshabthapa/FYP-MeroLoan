@@ -1,6 +1,8 @@
 import { User } from "../models/user.model.js";
 import { Loan } from "../models/loan.model.js";
 import { ActiveContract } from "../models/activeContract.model.js"; // Import the ActiveContract model
+import { Notification } from "../models/notification.model.js"; // Import the Notification model
+import { io } from "../index.js"; // Import the `io` instance for real-time notifications
 
 // Submit Loan Request
 export const submitLoanRequest = async (req, res) => {
@@ -45,6 +47,20 @@ export const submitLoanRequest = async (req, res) => {
     user.loanIds.push(newLoan._id);
     await user.save();
 
+    // Create a notification for the user
+    const notification = new Notification({
+      userId,
+      message: `Your loan request for $${loanAmount} has been submitted successfully.`,
+      timestamp: new Date(),
+    });
+    await notification.save();
+
+    // Emit a real-time notification to the user
+    io.to(userId).emit("newNotification", {
+      message: notification.message,
+      timestamp: notification.timestamp,
+    });
+
     res.status(201).json({
       success: true,
       message: "Loan request submitted successfully",
@@ -58,11 +74,17 @@ export const submitLoanRequest = async (req, res) => {
 // Fetch All Loan Requests
 export const getAllLoans = async (req, res) => {
   try {
-    const loans = await Loan.find().populate("userId", "name email").populate({
-      path: "activeContract",
-      select:
-        "amount repaymentType status repaymentSchedule totalRepaymentAmount transactionId", // Include all fields you need
-    }); // Populate activeContract;
+    const loans = await Loan.find()
+      .populate("userId", "name email")
+      .populate({
+        path: "activeContract",
+        select:
+          "amount repaymentType status repaymentSchedule totalRepaymentAmount transactionId createdAt insuranceAdded lender",
+        populate: {
+          path: "lender", // Populate the lender field inside activeContract
+          select: "name", // Only fetch the name field of the lender
+        }, // Include all fields you need
+      }); // Populate activeContract;
 
     if (!loans.length) {
       return res.status(404).json({

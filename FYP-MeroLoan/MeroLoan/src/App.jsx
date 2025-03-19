@@ -11,8 +11,6 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
-import UserManagement from "./pages/UserManagement";
-import InsuranceReview from "./pages/InsuranceReview";
 import LoanApplicationReview from "./pages/LoanApplicationReview";
 import UserProfile from "./pages/UserProfile";
 import { ToastContainer } from "react-toastify";
@@ -29,6 +27,7 @@ import UserLoanRequests from "./pages/UserLoanRequests";
 import RepaymentSuccess from "./pages/RepaymentSuccess";
 import LoanApplicationDetail from "./pages/LoanApplicationDetail";
 import TransactionHistory from "./pages/TransactionHistory";
+import BalanceTransferRequest from "./pages/BalanceTransferRequest";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -143,10 +142,10 @@ function App() {
             }
           />
           <Route
-            path="/insuranceReview"
+            path="/balanceTransferRequests"
             element={
               <AdminRoute>
-                <InsuranceReview />
+                <BalanceTransferRequest />
               </AdminRoute>
             }
           />
