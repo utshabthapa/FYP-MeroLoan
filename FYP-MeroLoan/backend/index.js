@@ -13,6 +13,7 @@ import activeContractRoutes from "./routes/activeContract.route.js";
 import userDashboardRoutes from "./routes/userDashboard.route.js";
 import transactionRoutes from "./routes/transaction.route.js";
 import notificationRoutes from "./routes/notification.route.js";
+import userProfileRoutes from "./routes/userProfile.route.js";
 
 import cookieParser from "cookie-parser";
 import path from "path";
@@ -70,6 +71,7 @@ app.use("/api/active-contracts", activeContractRoutes);
 app.use("/api/userDashboard", userDashboardRoutes);
 app.use("/api/transaction", transactionRoutes);
 app.use("/api/notification", notificationRoutes);
+app.use("/api/users", userProfileRoutes);
 
 // Start the server
 server.listen(PORT, () => {

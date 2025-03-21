@@ -28,6 +28,7 @@ import RepaymentSuccess from "./pages/RepaymentSuccess";
 import LoanApplicationDetail from "./pages/LoanApplicationDetail";
 import TransactionHistory from "./pages/TransactionHistory";
 import BalanceTransferRequest from "./pages/BalanceTransferRequest";
+import PublicUserProfile from "./pages/PublicUserProfile";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -172,6 +173,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <UserProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user-profile/:userId"
+            element={
+              <ProtectedRoute>
+                <PublicUserProfile />
               </ProtectedRoute>
             }
           />

@@ -64,6 +64,32 @@ export const useNotificationStore = create((set) => ({
     }));
   },
 
+  // Delete all notifications from the backend and update the store
+  deleteAllNotifications: async (userId) => {
+    set({ isLoading: true, error: null });
+    try {
+      // Make a DELETE request to the backend
+      const response = await axios.delete(`${API_URL}/user/${userId}`);
+
+      // Clear the notifications in the store
+      set({
+        notifications: [],
+        unreadCount: 0,
+        isLoading: false,
+      });
+
+      // Return the response for further handling (optional)
+      return response.data;
+    } catch (error) {
+      set({
+        error:
+          error.response?.data?.message || "Failed to delete notifications",
+        isLoading: false,
+      });
+      throw error; // Re-throw the error for further handling (optional)
+    }
+  },
+
   // Clear all notifications
   clearNotifications: () => {
     set({ notifications: [], unreadCount: 0 });

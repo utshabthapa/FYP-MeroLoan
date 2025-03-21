@@ -4,6 +4,7 @@ import { useLoanStore } from "../store/loanStore";
 import Navbar from "@/components/Navbar";
 import { formatDate } from "../utils/date";
 import { motion } from "framer-motion";
+import { User } from "lucide-react"; // Import the User icon
 
 const LoanRequests = () => {
   const { loans, isLoading, error, fetchLoans } = useLoanStore();
@@ -17,17 +18,10 @@ const LoanRequests = () => {
     navigate(`/loan-details/${loanId}`);
   };
 
-  // if (error) {
-  //   return (
-  //     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center">
-  //       <div className="bg-white p-6 rounded-lg shadow-lg text-gray-800">
-  //         <p className="text-lg">{error} hskdhfk</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  const handleViewProfile = (userId) => {
+    navigate(`/user-profile/${userId}`);
+  };
 
-  // Filter loans with status "not active"
   const filteredLoans = loans.filter((loan) => loan.status === "not active");
 
   return (
@@ -37,7 +31,6 @@ const LoanRequests = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          // transition={{ duration: 0.1 }}
           className="container mx-auto "
         >
           <div className="max-w-7xl mx-auto">
@@ -88,9 +81,22 @@ const LoanRequests = () => {
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
                           <p className="text-sm text-gray-500">Applicant</p>
-                          <p className="font-medium text-gray-800">
-                            {loan.userId.name}
-                          </p>
+                          <div className="flex items-center">
+                            <p className="font-medium text-gray-800">
+                              {loan.userId.name}
+                            </p>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewProfile(loan.userId._id);
+                              }}
+                              className="ml-2 p-1 text-xs text-blue-600 hover:text-blue-800 flex items-center"
+                              title="View Profile"
+                            >
+                              <User className="w-3 h-3 mr-1" />
+                              Profile
+                            </button>
+                          </div>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Loan Amount</p>
@@ -120,12 +126,20 @@ const LoanRequests = () => {
                               : "One-time Payment"}
                           </span>
                         </div>
-                        <button
-                          onClick={() => handleViewDetails(loan._id)}
-                          className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"
-                        >
-                          View Details
-                        </button>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleViewProfile(loan.userId._id)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+                          >
+                            View Profile
+                          </button>
+                          <button
+                            onClick={() => handleViewDetails(loan._id)}
+                            className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200"
+                          >
+                            View Details
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}

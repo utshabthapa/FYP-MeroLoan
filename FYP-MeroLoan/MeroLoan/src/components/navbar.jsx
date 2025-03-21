@@ -3,7 +3,7 @@ import { useAuthStore } from "../store/authStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import { Link, useLocation } from "react-router-dom";
 import { io } from "socket.io-client";
-import { Bell, User, BellOff, DollarSign } from "lucide-react";
+import { Bell, User, BellOff, DollarSign, Trash2 } from "lucide-react";
 import logo from "../assets/MeroLoan Logo.svg";
 
 const socket = io("http://localhost:5000");
@@ -16,6 +16,7 @@ const Navbar = () => {
     fetchNotifications,
     markAsRead,
     addNotification,
+    deleteAllNotifications, // Import the deleteAllNotifications function
   } = useNotificationStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef(null);
@@ -74,6 +75,16 @@ const Navbar = () => {
   const handleMarkAsRead = async (notificationId, e) => {
     e.stopPropagation();
     await markAsRead(notificationId);
+  };
+
+  // Delete all notifications
+  const handleDeleteAllNotifications = async () => {
+    try {
+      await deleteAllNotifications(user._id);
+      alert("All notifications deleted successfully");
+    } catch (error) {
+      alert("Failed to delete notifications");
+    }
   };
 
   // Active link style classes - using monotone colors
@@ -199,18 +210,28 @@ const Navbar = () => {
                           <h3 className="font-semibold text-lg">
                             Notifications
                           </h3>
-                          {notifications.length > 0 && (
-                            <button
-                              className="text-gray-600 text-xs hover:text-gray-800 transition-colors duration-200"
-                              onClick={() =>
-                                notifications.forEach(
-                                  (n) => !n.read && markAsRead(n._id)
-                                )
-                              }
-                            >
-                              Mark all as read
-                            </button>
-                          )}
+                          <div className="flex gap-2">
+                            {notifications.length > 0 && (
+                              <>
+                                <button
+                                  className="text-gray-600 text-xs hover:text-gray-800 transition-colors duration-200"
+                                  onClick={() =>
+                                    notifications.forEach(
+                                      (n) => !n.read && markAsRead(n._id)
+                                    )
+                                  }
+                                >
+                                  Mark all as read
+                                </button>
+                                <button
+                                  className="text-gray-600 text-xs hover:text-red-600 transition-colors duration-200"
+                                  onClick={handleDeleteAllNotifications}
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </div>
                         {notifications.length === 0 ? (
                           <div className="text-center py-6">
