@@ -5,7 +5,7 @@ import { formatDate } from "../utils/date";
 import Navbar from "@/components/Navbar";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom"; // React Router for Vite-based projects
+import { useNavigate } from "react-router-dom";
 
 const LoanForm = () => {
   const { submitLoanRequest, deleteLoanRequest } = useLoanStore();
@@ -43,12 +43,21 @@ const LoanForm = () => {
     navigate("/userProfile");
   };
 
+  // Calculate interest amount based on annual rate
+  const calculateInterestAmount = () => {
+    const principal = parseFloat(loanData.loanAmount) || 0;
+    const annualRate = parseFloat(loanData.interestRate) || 0;
+    const durationDays = parseInt(loanData.duration) || 0;
+
+    return (principal * annualRate * durationDays) / (100 * 365);
+  };
+
   const calculateRepaymentSchedule = () => {
-    const amount = parseFloat(loanData.loanAmount);
-    const rate = parseFloat(loanData.interestRate);
-    const totalAmount = amount + (amount * rate) / 100;
+    const principal = parseFloat(loanData.loanAmount) || 0;
+    const interestAmount = calculateInterestAmount();
+    const totalAmount = principal + interestAmount;
     const startDate = new Date();
-    const durationDays = parseInt(loanData.duration);
+    const durationDays = parseInt(loanData.duration) || 0;
 
     if (loanData.repaymentType === "one-time") {
       const endDate = new Date(
@@ -170,7 +179,7 @@ const LoanForm = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Interest Rate (%)
+                        Interest Rate (% per annum)
                       </label>
                       <input
                         type="number"
@@ -250,28 +259,37 @@ const LoanForm = () => {
                     </h3>
                     <div className="space-y-2">
                       <p className="text-gray-600">
-                        <span className="font-medium">Amount:</span> $
-                        {parseFloat(loanData.loanAmount).toLocaleString()}
+                        <span className="font-medium">Principal Amount:</span>{" "}
+                        Rs.
+                        {parseFloat(loanData.loanAmount || 0).toLocaleString()}
                       </p>
                       <p className="text-gray-600">
                         <span className="font-medium">Interest Rate:</span>{" "}
-                        {loanData.interestRate}%
+                        {loanData.interestRate}%{" "}
+                        <span className="text-sm text-gray-500">per annum</span>
                       </p>
                       <p className="text-gray-600">
                         <span className="font-medium">Duration:</span>{" "}
                         {loanData.duration} days
                       </p>
                       <p className="text-gray-600">
+                        <span className="font-medium">Interest Amount:</span>{" "}
+                        Rs.
+                        {calculateInterestAmount().toLocaleString(undefined, {
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                      <p className="text-gray-600">
                         <span className="font-medium">
-                          Total Amount (with interest):
+                          Total Amount (Principal + Interest):
                         </span>{" "}
-                        $
+                        Rs.
                         {(
-                          parseFloat(loanData.loanAmount) +
-                          (parseFloat(loanData.loanAmount) *
-                            parseFloat(loanData.interestRate)) /
-                            100
-                        ).toLocaleString()}
+                          parseFloat(loanData.loanAmount || 0) +
+                          calculateInterestAmount()
+                        ).toLocaleString(undefined, {
+                          maximumFractionDigits: 2,
+                        })}
                       </p>
                     </div>
                   </div>
@@ -287,7 +305,10 @@ const LoanForm = () => {
                             <span className="font-medium">
                               Payment {index + 1}:
                             </span>{" "}
-                            ${payment.amount.toLocaleString()}
+                            Rs.
+                            {payment.amount.toLocaleString(undefined, {
+                              maximumFractionDigits: 2,
+                            })}
                           </p>
                           <p className="text-gray-600">
                             <span className="font-medium">Due Date:</span>{" "}

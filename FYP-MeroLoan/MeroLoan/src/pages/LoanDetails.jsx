@@ -226,29 +226,29 @@ const LoanDetails = () => {
       );
     }
   };
-  const getAdjustedInterestRate = () => {
-    const baseRate = parseFloat(loan.interestRate);
-    return withInsurance ? baseRate - baseRate * 0.15 : baseRate;
-  };
-
+  // Updated function to calculate repayment schedule with annual interest rate
   const calculateRepaymentSchedule = () => {
     if (!loan) return [];
 
-    const amount = parseFloat(loan.loanAmount);
-    const rate = getAdjustedInterestRate();
-    const totalAmount = amount + (amount * rate) / 100;
-    const startDate = new Date(loan.appliedAt);
+    const principal = parseFloat(loan.loanAmount);
+    const annualInterestRate = getAdjustedInterestRate();
     const durationDays = parseInt(loan.duration);
+
+    // Calculate interest for the actual loan period (convert annual rate to daily rate)
+    const interestAmount =
+      (principal * annualInterestRate * durationDays) / (100 * 365);
+    const totalAmount = principal + interestAmount;
 
     if (loan.repaymentType === "one-time") {
       const endDate = new Date(
-        startDate.getTime() + durationDays * 24 * 60 * 60 * 1000
+        new Date(loan.appliedAt).getTime() + durationDays * 24 * 60 * 60 * 1000
       );
       return [{ date: endDate, amount: totalAmount }];
     } else {
       const milestones = parseInt(loan.milestones);
       const amountPerMilestone = totalAmount / milestones;
       const daysPerMilestone = durationDays / milestones;
+      const startDate = new Date(loan.appliedAt);
 
       return Array.from({ length: milestones }, (_, index) => ({
         date: new Date(
@@ -258,6 +258,21 @@ const LoanDetails = () => {
         amount: amountPerMilestone,
       }));
     }
+  };
+
+  // Also update the Loan Terms section to display the interest amount clearly
+  const getAdjustedInterestRate = () => {
+    const baseRate = parseFloat(loan.interestRate);
+    return withInsurance ? baseRate - baseRate * 0.15 : baseRate;
+  };
+
+  // Calculate interest amount for display
+  const calculateInterestAmount = () => {
+    const principal = parseFloat(loan.loanAmount);
+    const annualRate = getAdjustedInterestRate();
+    const durationDays = parseInt(loan.duration);
+
+    return (principal * annualRate * durationDays) / (100 * 365);
   };
 
   // Update the renderActionButton function to use handleRepayment instead of handleEsewaPayment
@@ -463,19 +478,29 @@ const LoanDetails = () => {
                               {getAdjustedInterestRate().toFixed(2)}%
                             </span>
                           )}
+                          <span className="ml-1 text-sm text-gray-500">
+                            per annum
+                          </span>
                         </p>
                         <p className="text-gray-600">
                           <span className="font-medium">Duration:</span>{" "}
                           {loan.duration} days
                         </p>
                         <p className="text-gray-600">
+                          <span className="font-medium">Interest Amount:</span>{" "}
+                          Rs.
+                          {calculateInterestAmount().toLocaleString(undefined, {
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                        <p className="text-gray-600">
                           <span className="font-medium">Total Amount:</span> Rs.
                           {(
                             parseFloat(loan.loanAmount) +
-                            (parseFloat(loan.loanAmount) *
-                              getAdjustedInterestRate()) /
-                              100
-                          ).toLocaleString()}
+                            calculateInterestAmount()
+                          ).toLocaleString(undefined, {
+                            maximumFractionDigits: 2,
+                          })}
                         </p>
                       </div>
                     </div>
