@@ -1,7 +1,7 @@
 import { User } from "../models/user.model.js";
 import { ActiveContract } from "../models/activeContract.model.js";
 
-// Get user profile by ID
+// Get user profile by ID with total borrowed and lent amounts
 export const getUserProfile = async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -16,9 +16,30 @@ export const getUserProfile = async (req, res) => {
       });
     }
 
+    // Calculate total borrowed (where user is borrower)
+    const borrowedContracts = await ActiveContract.find({ borrower: userId });
+    const totalBorrowed = borrowedContracts.reduce(
+      (sum, contract) => sum + (contract.amount || 0),
+      0
+    );
+
+    // Calculate total lent (where user is lender)
+    const lentContracts = await ActiveContract.find({ lender: userId });
+    const totalLent = lentContracts.reduce(
+      (sum, contract) => sum + (contract.amount || 0),
+      0
+    );
+
+    // Add the totals to the user object
+    const userWithTotals = {
+      ...user.toObject(),
+      totalBorrowed,
+      totalLent,
+    };
+
     res.status(200).json({
       success: true,
-      data: user,
+      data: userWithTotals,
     });
   } catch (error) {
     res.status(500).json({
