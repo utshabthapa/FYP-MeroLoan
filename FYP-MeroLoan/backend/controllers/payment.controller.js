@@ -113,10 +113,44 @@ export const paymentSuccess = async (req, res) => {
       loan.pendingRepaymentDetails.borrowerId
     );
 
+    // Update lender's credit score based on lending amount
+    const lendingAmount = loan.pendingRepaymentDetails.amount;
+    let creditScoreIncrease = 0;
+
+    // Determine credit score increase based on lending amount
+    if (lendingAmount >= 500 && lendingAmount < 1000) {
+      creditScoreIncrease = 2;
+    } else if (lendingAmount >= 1000 && lendingAmount < 5000) {
+      creditScoreIncrease = 5;
+    } else if (lendingAmount >= 5000 && lendingAmount < 10000) {
+      creditScoreIncrease = 8;
+    } else if (lendingAmount >= 10000 && lendingAmount < 50000) {
+      creditScoreIncrease = 12;
+    } else if (lendingAmount >= 50000 && lendingAmount < 100000) {
+      creditScoreIncrease = 18;
+    } else if (lendingAmount >= 100000 && lendingAmount <= 500000) {
+      creditScoreIncrease = 30;
+    } else if (lendingAmount < 500) {
+      creditScoreIncrease = 0; // No increase for amounts less than 500
+    }
+
+    // Apply credit score increase to lender
+    if (lender && creditScoreIncrease > 0) {
+      lender.creditScore = Math.min(
+        lender.creditScore + creditScoreIncrease,
+        100
+      ); // Cap at 100
+      await lender.save();
+    }
+
     // Notification for Lender
     const lenderNotification = new Notification({
       userId: loan.pendingRepaymentDetails.lenderId,
-      message: `Your transaction has been processed. You will be notified as soon as it gets verified.`,
+      message: `Your transaction has been processed. You will be notified as soon as it gets verified.${
+        creditScoreIncrease > 0
+          ? ` Your credit score has increased by ${creditScoreIncrease} points.`
+          : ""
+      }`,
       timestamp: new Date(),
     });
     await lenderNotification.save();
@@ -146,6 +180,7 @@ export const paymentSuccess = async (req, res) => {
         timestamp: borrowerNotification.timestamp,
       }
     );
+
     // Update user to add transaction ID
     const user = await User.findById(loan.pendingRepaymentDetails.borrowerId);
     if (user) {
@@ -169,6 +204,7 @@ export const paymentSuccess = async (req, res) => {
       message: "Payment successful. Loan activated.",
       transactionId: transaction._id,
       loanId: loan._id,
+      lenderCreditScoreIncrease: creditScoreIncrease,
     });
   } catch (error) {
     console.error("Error in paymentSuccess:", error);
@@ -178,41 +214,6 @@ export const paymentSuccess = async (req, res) => {
     });
   }
 };
-
-// Add a payment failure handler
-// export const paymentFailure = async (req, res) => {
-//   try {
-//     const { transaction_uuid, loanId } = req.query;
-
-//     // Find the loan either by ID or by pendingPaymentId
-//     let loan;
-//     if (loanId) {
-//       loan = await Loan.findById(loanId);
-//     } else if (transaction_uuid) {
-//       loan = await Loan.findOne({ pendingPaymentId: transaction_uuid });
-//     }
-
-//     if (loan) {
-//       // Clear the pending payment data
-//       loan.pendingPaymentId = undefined;
-//       loan.pendingPaymentDetails = undefined;
-//       await loan.save();
-//     }
-
-//     res.json({
-//       message: "Payment failed. No transaction was created.",
-//       loanId: loan ? loan._id : null,
-//     });
-//   } catch (error) {
-//     console.error("Error in paymentFailure:", error);
-//     res.status(500).json({
-//       message: "Error processing payment failure",
-//       error: error.message,
-//     });
-//   }
-// };
-
-// Add these functions to your paymentController.js
 
 // Initiate repayment for borrowers
 export const initiateRepayment = async (req, res) => {
@@ -295,7 +296,6 @@ export const initiateRepayment = async (req, res) => {
 };
 
 // Process repayment success
-// Process repayment success
 export const repaymentSuccess = async (req, res) => {
   try {
     // Get only transaction_uuid from query parameters
@@ -330,10 +330,35 @@ export const repaymentSuccess = async (req, res) => {
       type: "REPAYMENT",
     });
 
+    // Check if payment is on time or late
+    let isOnTime = true;
+    let daysLate = 0;
+    let milestoneIndex = -1;
+
+    if (loan.pendingRepaymentDetails.isMilestonePayment) {
+      milestoneIndex = loan.pendingRepaymentDetails.milestoneNumber - 1;
+
+      if (
+        milestoneIndex >= 0 &&
+        milestoneIndex < activeContract.repaymentSchedule.length
+      ) {
+        const milestone = activeContract.repaymentSchedule[milestoneIndex];
+        const dueDate = new Date(milestone.dueDate);
+        const currentDate = new Date();
+
+        // Check if payment is made after the due date
+        isOnTime = currentDate <= dueDate;
+
+        // Calculate days late if payment is late
+        if (!isOnTime) {
+          const timeDiff = currentDate.getTime() - dueDate.getTime();
+          daysLate = Math.floor(timeDiff / (1000 * 3600 * 24));
+        }
+      }
+    }
+
     // Update the repayment schedule in the active contract
     if (loan.pendingRepaymentDetails.isMilestonePayment) {
-      const milestoneIndex = loan.pendingRepaymentDetails.milestoneNumber - 1;
-
       if (
         milestoneIndex >= 0 &&
         milestoneIndex < activeContract.repaymentSchedule.length
@@ -342,6 +367,12 @@ export const repaymentSuccess = async (req, res) => {
         activeContract.repaymentSchedule[milestoneIndex].paidAt = new Date();
         activeContract.repaymentSchedule[milestoneIndex].transactionId =
           transaction._id;
+
+        // Record if it was paid late
+        if (!isOnTime) {
+          activeContract.repaymentSchedule[milestoneIndex].paidLate = true;
+          activeContract.repaymentSchedule[milestoneIndex].daysLate = daysLate;
+        }
       }
     } else {
       // For one-time payments, mark all as paid
@@ -349,6 +380,23 @@ export const repaymentSuccess = async (req, res) => {
         milestone.status = "paid";
         milestone.paidAt = new Date();
         milestone.transactionId = transaction._id;
+
+        // Check if this payment is late
+        const dueDate = new Date(milestone.dueDate);
+        const currentDate = new Date();
+        const isMilestoneLate = currentDate > dueDate;
+
+        if (isMilestoneLate) {
+          const timeDiff = currentDate.getTime() - dueDate.getTime();
+          const milestoneDaysLate = Math.floor(timeDiff / (1000 * 3600 * 24));
+
+          milestone.paidLate = true;
+          milestone.daysLate = milestoneDaysLate;
+
+          // Update overall late status
+          isOnTime = false;
+          daysLate = Math.max(daysLate, milestoneDaysLate);
+        }
       });
     }
 
@@ -371,10 +419,70 @@ export const repaymentSuccess = async (req, res) => {
       loan.pendingRepaymentDetails.borrowerId
     );
 
+    // Update borrower's credit score based on payment amount and timeliness
+    const repaymentAmount = loan.pendingRepaymentDetails.amount;
+    let creditScoreChange = 0;
+
+    if (isOnTime) {
+      // Determine credit score increase based on repayment amount for on-time payments
+      if (repaymentAmount >= 500 && repaymentAmount < 1000) {
+        creditScoreChange = 2;
+      } else if (repaymentAmount >= 1000 && repaymentAmount < 5000) {
+        creditScoreChange = 5;
+      } else if (repaymentAmount >= 5000 && repaymentAmount < 10000) {
+        creditScoreChange = 8;
+      } else if (repaymentAmount >= 10000 && repaymentAmount < 50000) {
+        creditScoreChange = 12;
+      } else if (repaymentAmount >= 50000 && repaymentAmount < 100000) {
+        creditScoreChange = 18;
+      } else if (repaymentAmount >= 100000 && repaymentAmount <= 500000) {
+        creditScoreChange = 30;
+      } else if (repaymentAmount < 500) {
+        creditScoreChange = 0; // No increase for amounts less than 500
+      }
+    } else {
+      // Determine credit score decrease based on days late
+      if (daysLate <= 7) {
+        creditScoreChange = -5; // 1-7 days late: -5 points
+      } else if (daysLate <= 14) {
+        creditScoreChange = -10; // 8-14 days late: -10 points
+      } else if (daysLate <= 30) {
+        creditScoreChange = -15; // 15-30 days late: -15 points
+      } else {
+        creditScoreChange = -25; // More than 30 days late: -25 points
+      }
+    }
+
+    // Apply credit score change
+    if (borrower && creditScoreChange !== 0) {
+      if (creditScoreChange > 0) {
+        borrower.creditScore = Math.min(
+          borrower.creditScore + creditScoreChange,
+          100
+        ); // Cap at 100
+      } else {
+        borrower.creditScore = Math.max(
+          borrower.creditScore + creditScoreChange,
+          0
+        ); // Floor at 0
+      }
+      await borrower.save();
+    }
+
+    // Notification message based on credit score change
+    let creditScoreMessage = "";
+    if (creditScoreChange > 0) {
+      creditScoreMessage = ` Your credit score has increased by ${creditScoreChange} points.`;
+    } else if (creditScoreChange < 0) {
+      creditScoreMessage = ` Your credit score has decreased by ${Math.abs(
+        creditScoreChange
+      )} points due to late payment.`;
+    }
+
     // Notification for Borrower
     const borrowerNotification = new Notification({
       userId: loan.pendingRepaymentDetails.borrowerId,
-      message: `Your repayment transaction has been processed. You will be notified as soon as it gets verified.`,
+      message: `Your repayment transaction has been processed. You will be notified as soon as it gets verified.${creditScoreMessage}`,
       timestamp: new Date(),
     });
     await borrowerNotification.save();
@@ -391,7 +499,9 @@ export const repaymentSuccess = async (req, res) => {
     // Notification for Lender
     const lenderNotification = new Notification({
       userId: loan.pendingRepaymentDetails.lenderId,
-      message: `You got repaid $${loan.pendingRepaymentDetails.amount} by ${borrower.name}.`,
+      message: `You got repaid $${loan.pendingRepaymentDetails.amount} by ${
+        borrower.name
+      }${!isOnTime ? ` (${daysLate} days late)` : ""}.`,
       timestamp: new Date(),
     });
     await lenderNotification.save();
@@ -425,6 +535,9 @@ export const repaymentSuccess = async (req, res) => {
       loanId: loan._id,
       activeContractId: activeContract._id,
       allMilestonesPaid: allPaid,
+      creditScoreChange: creditScoreChange,
+      isLate: !isOnTime,
+      daysLate: isOnTime ? 0 : daysLate,
     });
   } catch (error) {
     console.error("Error in repaymentSuccess:", error);

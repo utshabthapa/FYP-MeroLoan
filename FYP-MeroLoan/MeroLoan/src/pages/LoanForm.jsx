@@ -23,6 +23,12 @@ const LoanForm = () => {
     repaymentType: "one-time",
     milestones: 2,
   });
+  const [validationErrors, setValidationErrors] = useState({
+    loanAmount: "",
+  });
+
+  const MIN_LOAN_AMOUNT = 500;
+  const MAX_LOAN_AMOUNT = 500000; // 5 lakhs
 
   const isKycApproved = kycStatus === "approved";
 
@@ -84,9 +90,32 @@ const LoanForm = () => {
     }
   };
 
+  const validateLoanAmount = (amount) => {
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount)) {
+      return "Please enter a valid amount";
+    }
+    if (numAmount < MIN_LOAN_AMOUNT) {
+      return `Loan amount must be at least Rs. ${MIN_LOAN_AMOUNT}`;
+    }
+    if (numAmount > MAX_LOAN_AMOUNT) {
+      return `Loan amount cannot exceed Rs. ${MAX_LOAN_AMOUNT.toLocaleString()} (5 lakhs)`;
+    }
+    return "";
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setLoanData({ ...loanData, [name]: value });
+
+    // Validate loan amount
+    if (name === "loanAmount") {
+      const error = validateLoanAmount(value);
+      setValidationErrors({
+        ...validationErrors,
+        loanAmount: error,
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -98,6 +127,12 @@ const LoanForm = () => {
 
     if (!isKycApproved) {
       toast.error("KYC verification is required to submit a loan request.");
+      return;
+    }
+
+    const loanAmountError = validateLoanAmount(loanData.loanAmount);
+    if (loanAmountError) {
+      toast.error(loanAmountError);
       return;
     }
 
@@ -120,6 +155,13 @@ const LoanForm = () => {
 
   const handleNext = (e) => {
     e.preventDefault();
+
+    const loanAmountError = validateLoanAmount(loanData.loanAmount);
+    if (loanAmountError) {
+      toast.error(loanAmountError);
+      return;
+    }
+
     setStep(2);
   };
 
@@ -161,20 +203,40 @@ const LoanForm = () => {
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">
                   Apply for a Loan
                 </h2>
+
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-blue-800 font-medium">
+                    Loan Amount Range: Minimum Rs.{" "}
+                    {MIN_LOAN_AMOUNT.toLocaleString()} to Maximum Rs.{" "}
+                    {MAX_LOAN_AMOUNT.toLocaleString()} (5 lakhs)
+                  </p>
+                </div>
+
                 <form onSubmit={handleNext}>
                   <div className="space-y-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Loan Amount
+                        Loan Amount (NPR)
                       </label>
                       <input
                         type="number"
                         name="loanAmount"
                         value={loanData.loanAmount}
                         onChange={handleInputChange}
+                        min={MIN_LOAN_AMOUNT}
+                        max={MAX_LOAN_AMOUNT}
                         required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
+                        className={`w-full px-4 py-2 border ${
+                          validationErrors.loanAmount
+                            ? "border-red-500 focus:ring-red-400"
+                            : "border-gray-300 focus:ring-gray-400"
+                        } rounded-md focus:ring-2 focus:border-transparent transition-all duration-200`}
                       />
+                      {validationErrors.loanAmount && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {validationErrors.loanAmount}
+                        </p>
+                      )}
                     </div>
 
                     <div>

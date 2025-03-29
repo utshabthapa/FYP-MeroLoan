@@ -80,6 +80,11 @@ const userSchema = new mongoose.Schema(
       min: 0, // Ensures the credit score is not less than 0
       max: 100, // Ensures the credit score is not more than 100
     },
+    banStatus: {
+      type: String,
+      enum: ["notBanned", "banned"],
+      default: "notBanned",
+    },
     resetPasswordToken: String,
     resetPasswordExpiresAt: Date,
     verificationToken: String,

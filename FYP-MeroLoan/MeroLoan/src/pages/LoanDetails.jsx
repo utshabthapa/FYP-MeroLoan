@@ -10,15 +10,18 @@ import { motion } from "framer-motion";
 
 const LoanDetails = () => {
   const { loanId } = useParams();
-  const { loans, deleteLoan } = useLoanStore(); // Add deleteLoan from store
+  const { loans, deleteLoan } = useLoanStore();
   const [isDeleting, setIsDeleting] = useState(false);
   const [loan, setLoan] = useState(null);
   const [withInsurance, setWithInsurance] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const kycStatus = user?.kycStatus || "notApplied";
   const userId = user?._id;
   const { initiateEsewaPayment, initiateRepayment, isProcessing } =
-    usePaymentStore(); // Use payment store
+    usePaymentStore();
+
+  const isKycApproved = kycStatus === "approved";
 
   useEffect(() => {
     const foundLoan = loans.find((loan) => loan._id === loanId);
@@ -53,6 +56,15 @@ const LoanDetails = () => {
   ) => {
     if (!loan || !user) {
       alert("Loan or user data is missing.");
+      return;
+    }
+
+    // Check if user's KYC is approved before proceeding
+    if (!isKycApproved) {
+      alert(
+        "Your KYC must be approved before you can lend money. Please complete your KYC verification first."
+      );
+      navigate(`/kyc-form/${user._id}`);
       return;
     }
 
@@ -113,7 +125,7 @@ const LoanDetails = () => {
         borrower: loan.userId._id,
         amount: paymentAmount,
         insuranceAdded: withInsurance,
-        isMilestonePayment: isMilestone, // Add this field
+        isMilestonePayment: isMilestone,
         transactionUuid: paymentPayload.transaction_uuid,
         milestoneNumber: isMilestone ? milestoneNumber : null,
       };
@@ -153,7 +165,7 @@ const LoanDetails = () => {
         loanId: loan._id,
         amount: paymentAmount,
         borrowerId: user._id,
-        lenderId: loan.activeContract?.lender || null, // Get lender from active contract if available
+        lenderId: loan.activeContract?.lender || null,
         isMilestonePayment: isMilestone,
         milestoneNumber: milestoneNumber,
       };
@@ -275,8 +287,7 @@ const LoanDetails = () => {
     return (principal * annualRate * durationDays) / (100 * 365);
   };
 
-  // Update the renderActionButton function to use handleRepayment instead of handleEsewaPayment
-  // for borrower repayments
+  // Update the renderActionButton function to handle KYC validation for lenders
   const renderActionButton = () => {
     const isUserLoan = user?._id === loan.userId._id;
 
@@ -284,6 +295,23 @@ const LoanDetails = () => {
     if (!isUserLoan) {
       const isMilestonePayment = loan.repaymentType === "milestone";
       const milestoneNumber = isMilestonePayment ? 1 : null;
+
+      // Check if user's KYC is approved
+      if (!isKycApproved) {
+        return (
+          <div className="flex flex-col space-y-2 items-center">
+            <button
+              onClick={() => navigate(`/kyc-form/${user._id}`)}
+              className="px-6 py-3 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-200"
+            >
+              Complete KYC Verification First
+            </button>
+            <p className="text-sm text-gray-600 italic">
+              You need KYC approval before lending
+            </p>
+          </div>
+        );
+      }
 
       return (
         <button
@@ -324,7 +352,6 @@ const LoanDetails = () => {
     // Handle borrower repayment actions for active loans
     const repaymentSchedule = calculateRepaymentSchedule();
 
-    // Find the active contract to get actual repayment schedule
     // Find the active contract to get actual repayment schedule
     const activeContract = loan.activeContract;
 
@@ -414,7 +441,7 @@ const LoanDetails = () => {
             <div className="bg-white rounded-lg shadow-lg overflow-hidden">
               <div className="bg-gray-800 px-6 py-4 flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-white">Loan Details</h1>
-                {!isUserLoan && (
+                {!isUserLoan && isKycApproved && (
                   <button
                     onClick={() => setWithInsurance(!withInsurance)}
                     className={`px-4 py-2 rounded-lg transition-all duration-200 ${
@@ -426,7 +453,35 @@ const LoanDetails = () => {
                     {withInsurance ? "✓ With Insurance" : "Add Insurance"}
                   </button>
                 )}
+                {!isUserLoan && !isKycApproved && (
+                  <div className="px-4 py-2 bg-gray-700 text-white rounded-lg opacity-70">
+                    Insurance available after KYC
+                  </div>
+                )}
               </div>
+
+              {!isUserLoan && !isKycApproved && (
+                <div className="bg-yellow-50 p-4 border-b border-yellow-100">
+                  <div className="flex items-center text-yellow-800">
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <p>
+                      {/* {getKycStatusMessage()} */}
+                      You need to complete KYC verification before you can lend
+                      money on our platform.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div className="p-6 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

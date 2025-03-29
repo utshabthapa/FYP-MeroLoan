@@ -64,4 +64,62 @@ export const useAdminStore = create((set) => ({
       throw error;
     }
   },
+
+  // Ban a user
+  banUser: async (userId) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      await axios.patch(
+        `${API_URL}/users/${userId}/ban`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
+      // Update the user's status in the store
+      set((state) => ({
+        allUsers: state.allUsers.map((user) =>
+          user._id === userId ? { ...user, banStatus: "banned" } : user
+        ),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || "Failed to ban user",
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
+
+  // Unban a user
+  unbanUser: async (userId) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      await axios.patch(
+        `${API_URL}/users/${userId}/unban`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
+      // Update the user's status in the store
+      set((state) => ({
+        allUsers: state.allUsers.map((user) =>
+          user._id === userId ? { ...user, banStatus: "notBanned" } : user
+        ),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || "Failed to unban user",
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
 }));

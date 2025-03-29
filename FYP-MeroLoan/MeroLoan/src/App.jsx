@@ -29,6 +29,7 @@ import LoanApplicationDetail from "./pages/LoanApplicationDetail";
 import TransactionHistory from "./pages/TransactionHistory";
 import BalanceTransferRequest from "./pages/BalanceTransferRequest";
 import PublicUserProfile from "./pages/PublicUserProfile";
+import BanUsers from "./pages/BanUsers";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -115,6 +116,14 @@ function App() {
             element={
               <AdminRoute>
                 <KYCAdminPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/banUsers"
+            element={
+              <AdminRoute>
+                <BanUsers />
               </AdminRoute>
             }
           />

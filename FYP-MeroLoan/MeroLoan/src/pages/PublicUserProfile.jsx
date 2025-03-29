@@ -411,7 +411,7 @@ const PublicUserProfile = () => {
                   </div>
                 </div>
 
-                {/* Account stats */}
+                {/* Account stats
                 {userProfile.totalBorrowed !== undefined &&
                   userProfile.totalLent !== undefined && (
                     <div className="grid grid-cols-2 gap-4 mt-6">
@@ -428,7 +428,7 @@ const PublicUserProfile = () => {
                         </p>
                       </div>
                     </div>
-                  )}
+                  )} */}
               </div>
             </motion.div>
 

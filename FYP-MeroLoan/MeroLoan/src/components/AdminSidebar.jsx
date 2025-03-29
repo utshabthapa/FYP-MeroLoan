@@ -32,6 +32,11 @@ const AdminSidebar = () => {
       name: "Transfer Requests",
       icon: Shield,
     },
+    {
+      path: "/banUsers",
+      name: "Ban Users",
+      icon: Shield,
+    },
   ];
 
   return (

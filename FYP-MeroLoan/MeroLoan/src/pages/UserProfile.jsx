@@ -645,7 +645,7 @@ const UserProfile = () => {
 
               <div className="space-y-3">
                 <button
-                  onClick={() => navigate("/transaction-history")}
+                  onClick={() => navigate("/transactionHistory")}
                   className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors flex items-center"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
