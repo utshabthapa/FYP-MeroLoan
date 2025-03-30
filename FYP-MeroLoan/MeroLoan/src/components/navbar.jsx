@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import logo from "../assets/MeroLoan Logo.svg";
 import { motion, AnimatePresence } from "framer-motion";
+import BanAlert from "./BanAlert";
 
 const socket = io("http://localhost:5000");
 
@@ -188,36 +189,7 @@ const NotificationPanel = ({
           >
             Unread
           </button>
-          {/* <button
-            className={`px-3 py-1 text-xs rounded-full whitespace-nowrap ${
-              activeFilter === "loan"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-            }`}
-            onClick={() => setActiveFilter("loan")}
-          >
-            Loans
-          </button>
-          <button
-            className={`px-3 py-1 text-xs rounded-full whitespace-nowrap ${
-              activeFilter === "payment"
-                ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-            }`}
-            onClick={() => setActiveFilter("payment")}
-          >
-            Payments
-          </button>
-          <button
-            className={`px-3 py-1 text-xs rounded-full whitespace-nowrap ${
-              activeFilter === "reminder"
-                ? "bg-amber-600 text-white"
-                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-            }`}
-            onClick={() => setActiveFilter("reminder")}
-          >
-            Reminders
-          </button> */}
+          {/* Type filters commented out */}
         </div>
       </div>
 
@@ -381,175 +353,180 @@ const Navbar = () => {
     "flex items-center gap-2 transition-all duration-200 hover:text-gray-600";
 
   return (
-    <div className="fixed w-full top-0 z-50 border-b-2 bg-white">
-      <div className="flex justify-between mx-auto items-center py-3 bg-white text-black font-semibold rounded-lg max-w-7xl">
-        <div>
-          <Link to="/dashboard">
-            <img
-              src={logo || "/placeholder.svg"}
-              alt="MeroLoan Logo"
-              className="h-11 w-auto"
-            />
-          </Link>
-        </div>
-        <div>
-          <ul className="flex space-x-6 items-center">
-            {!isAuthenticated && (
-              <>
-                <li>
-                  <Link
-                    to="/"
-                    className={`${defaultLinkClasses} ${
-                      isActive("/") ? activeLinkClasses : ""
-                    }`}
-                  >
-                    <span>Home</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/about"
-                    className={`${defaultLinkClasses} ${
-                      isActive("/about") ? activeLinkClasses : ""
-                    }`}
-                  >
-                    <span>About Us</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/signup"
-                    className={`${defaultLinkClasses} ${
-                      isActive("/signup") ? activeLinkClasses : ""
-                    }`}
-                  >
-                    Sign Up
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/login"
-                    className={`${defaultLinkClasses} ${
-                      isActive("/login") ? activeLinkClasses : ""
-                    }`}
-                  >
-                    Login
-                  </Link>
-                </li>
-              </>
-            )}
-            {isAuthenticated && (
-              <>
-                <li>
-                  <Link
-                    to="/dashboard"
-                    className={`${defaultLinkClasses} ${
-                      isActive("/dashboard") ? activeLinkClasses : ""
-                    }`}
-                  >
-                    <span>Dashboard</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/loan-requests"
-                    className={`${defaultLinkClasses} ${
-                      isActive("/loan-requests") ? activeLinkClasses : ""
-                    }`}
-                  >
-                    <span>Loan Requests</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/transactionHistory"
-                    className={`${defaultLinkClasses} ${
-                      isActive("/transactionHistory") ? activeLinkClasses : ""
-                    }`}
-                  >
-                    <span>Transaction History</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/active-contracts"
-                    className={`${defaultLinkClasses} ${
-                      isActive("/active-contracts") ? activeLinkClasses : ""
-                    }`}
-                  >
-                    <span>Active Contracts</span>
-                  </Link>
-                </li>
-                <li className="relative" ref={notificationRef}>
-                  <button
-                    onClick={toggleNotifications}
-                    className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 ${
-                      showNotifications ? "bg-gray-200" : "hover:bg-gray-100"
-                    }`}
-                    aria-label="Notifications"
-                  >
-                    <Bell size={20} className="text-gray-700" />
-                    {unreadCount > 0 && (
-                      <motion.span
-                        initial={{ scale: 0.5 }}
-                        animate={{ scale: 1 }}
-                        className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full flex items-center justify-center min-w-[18px] h-[18px] px-1"
-                      >
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </motion.span>
-                    )}
-                  </button>
+    <>
+      <div className="fixed w-full top-0 z-50 border-b-2 bg-white ">
+        <div className="flex justify-between mx-auto items-center py-3 bg-white text-black font-semibold rounded-lg max-w-7xl">
+          <div>
+            <Link to="/dashboard">
+              <img
+                src={logo || "/placeholder.svg"}
+                alt="MeroLoan Logo"
+                className="h-11 w-auto"
+              />
+            </Link>
+          </div>
+          <div>
+            <ul className="flex space-x-6 items-center">
+              {!isAuthenticated && (
+                <>
+                  <li>
+                    <Link
+                      to="/"
+                      className={`${defaultLinkClasses} ${
+                        isActive("/") ? activeLinkClasses : ""
+                      }`}
+                    >
+                      <span>Home</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/about"
+                      className={`${defaultLinkClasses} ${
+                        isActive("/about") ? activeLinkClasses : ""
+                      }`}
+                    >
+                      <span>About Us</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/signup"
+                      className={`${defaultLinkClasses} ${
+                        isActive("/signup") ? activeLinkClasses : ""
+                      }`}
+                    >
+                      Sign Up
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/login"
+                      className={`${defaultLinkClasses} ${
+                        isActive("/login") ? activeLinkClasses : ""
+                      }`}
+                    >
+                      Login
+                    </Link>
+                  </li>
+                </>
+              )}
+              {isAuthenticated && (
+                <>
+                  <li>
+                    <Link
+                      to="/dashboard"
+                      className={`${defaultLinkClasses} ${
+                        isActive("/dashboard") ? activeLinkClasses : ""
+                      }`}
+                    >
+                      <span>Dashboard</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/loan-requests"
+                      className={`${defaultLinkClasses} ${
+                        isActive("/loan-requests") ? activeLinkClasses : ""
+                      }`}
+                    >
+                      <span>Loan Requests</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/transactionHistory"
+                      className={`${defaultLinkClasses} ${
+                        isActive("/transactionHistory") ? activeLinkClasses : ""
+                      }`}
+                    >
+                      <span>Transaction History</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/active-contracts"
+                      className={`${defaultLinkClasses} ${
+                        isActive("/active-contracts") ? activeLinkClasses : ""
+                      }`}
+                    >
+                      <span>Active Contracts</span>
+                    </Link>
+                  </li>
+                  <li className="relative" ref={notificationRef}>
+                    <button
+                      onClick={toggleNotifications}
+                      className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 ${
+                        showNotifications ? "bg-gray-200" : "hover:bg-gray-100"
+                      }`}
+                      aria-label="Notifications"
+                    >
+                      <Bell size={20} className="text-gray-700" />
+                      {unreadCount > 0 && (
+                        <motion.span
+                          initial={{ scale: 0.5 }}
+                          animate={{ scale: 1 }}
+                          className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full flex items-center justify-center min-w-[18px] h-[18px] px-1"
+                        >
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </motion.span>
+                      )}
+                    </button>
 
-                  {/* Enhanced Notification Panel */}
-                  <AnimatePresence>
-                    {showNotifications && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <NotificationPanel
-                          notifications={notifications}
-                          onMarkAsRead={handleMarkAsRead}
-                          onMarkAllAsRead={handleMarkAllAsRead}
-                          onDeleteAll={handleDeleteAllNotifications}
-                          onClose={() => setShowNotifications(false)}
-                          activeFilter={activeFilter}
-                          setActiveFilter={setActiveFilter}
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </li>
-                <li>
-                  <Link
-                    to="/userProfile"
-                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 ${
-                      isActive("/userProfile")
-                        ? "bg-gray-200"
-                        : "hover:bg-gray-100"
-                    }`}
-                  >
-                    <User size={20} className="text-gray-700" />
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className={`${
-                      isActive("/loan-form") ? "bg-gray-800" : "bg-gray-700"
-                    } text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors duration-200`}
-                    to="/loan-form"
-                  >
-                    Apply for a loan
-                  </Link>
-                </li>
-              </>
-            )}
-          </ul>
+                    {/* Enhanced Notification Panel */}
+                    <AnimatePresence>
+                      {showNotifications && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <NotificationPanel
+                            notifications={notifications}
+                            onMarkAsRead={handleMarkAsRead}
+                            onMarkAllAsRead={handleMarkAllAsRead}
+                            onDeleteAll={handleDeleteAllNotifications}
+                            onClose={() => setShowNotifications(false)}
+                            activeFilter={activeFilter}
+                            setActiveFilter={setActiveFilter}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </li>
+                  <li>
+                    <Link
+                      to="/userProfile"
+                      className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors duration-200 ${
+                        isActive("/userProfile")
+                          ? "bg-gray-200"
+                          : "hover:bg-gray-100"
+                      }`}
+                    >
+                      <User size={20} className="text-gray-700" />
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      className={`${
+                        isActive("/loan-form") ? "bg-gray-800" : "bg-gray-700"
+                      } text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors duration-200`}
+                      to="/loan-form"
+                    >
+                      Apply for a loan
+                    </Link>
+                  </li>
+                </>
+              )}
+            </ul>
+          </div>
         </div>
       </div>
-    </div>
+      <div className=" relative top-16 left-0 w-full h-fullz-40">
+        {isAuthenticated && user?.banStatus === "banned" && <BanAlert />}
+      </div>
+    </>
   );
 };
 

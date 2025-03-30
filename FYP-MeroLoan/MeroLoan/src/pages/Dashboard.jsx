@@ -312,7 +312,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="max-w-7xl mx-auto pt-28 px-4 pb-12">
+      <div className="max-w-7xl mx-auto pt-24 px-4 pb-12">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

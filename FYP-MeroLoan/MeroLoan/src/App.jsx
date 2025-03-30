@@ -30,6 +30,8 @@ import TransactionHistory from "./pages/TransactionHistory";
 import BalanceTransferRequest from "./pages/BalanceTransferRequest";
 import PublicUserProfile from "./pages/PublicUserProfile";
 import BanUsers from "./pages/BanUsers";
+import AppealPage from "./pages/AppealPage";
+import AdminAppealsPage from "./pages/AdminAppealsPage";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -250,6 +252,14 @@ function App() {
               </AdminRoute>
             }
           />
+          <Route
+            path="/banAppeals"
+            element={
+              <AdminRoute>
+                <AdminAppealsPage />
+              </AdminRoute>
+            }
+          />
           {/* KYC Form Page for Users */}
           <Route
             path="/kyc-form/:_id"
@@ -312,6 +322,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <PaymentFailure />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/account/appeal"
+            element={
+              <ProtectedRoute>
+                <AppealPage />
               </ProtectedRoute>
             }
           />

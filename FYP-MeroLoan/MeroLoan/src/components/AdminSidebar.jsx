@@ -37,6 +37,11 @@ const AdminSidebar = () => {
       name: "Ban Users",
       icon: Shield,
     },
+    {
+      path: "/banAppeals",
+      name: "Appeals",
+      icon: Shield,
+    },
   ];
 
   return (
