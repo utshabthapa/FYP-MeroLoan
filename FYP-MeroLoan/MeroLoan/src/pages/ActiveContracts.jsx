@@ -265,7 +265,8 @@ const ActiveContracts = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-bold text-gray-800">
-                    Rs. {parseFloat(contract.amount).toLocaleString()}
+                    Rs.{" "}
+                    {parseFloat(contract.totalRepaymentAmount).toLocaleString()}
                   </p>
                   <p className="text-sm text-gray-500">
                     {contract.repaymentType === "milestone"

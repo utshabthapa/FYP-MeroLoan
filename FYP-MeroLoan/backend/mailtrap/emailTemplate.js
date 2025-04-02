@@ -93,3 +93,82 @@ export const PASSWORD_RESET_REQUEST_TEMPLATE = `
 </body>
 </html>
 `;
+
+// Add these to your emailTemplate.js file
+export const KYC_APPROVED_TEMPLATE = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #4CAF50; color: white; padding: 10px; text-align: center; }
+    .content { padding: 20px; border: 1px solid #ddd; }
+    .footer { margin-top: 20px; text-align: center; font-size: 12px; color: #777; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>MeroLoan - KYC Verification Approved</h2>
+    </div>
+    <div class="content">
+      <p>Dear {userName},</p>
+      <p>Congratulations! Your KYC (Know Your Customer) verification has been <strong>approved</strong>.</p>
+      <p>This approval means you now have full access to all MeroLoan services. Your identity has been verified and your account has been upgraded.</p>
+      <p>Benefits of your verified status:</p>
+      <ul>
+        <li>Higher loan limits</li>
+        <li>Better interest rates</li>
+        <li>Faster loan processing</li>
+        <li>Improved credit score</li>
+      </ul>
+      <p>Thank you for your patience during this process. If you have any questions about your approved status or need any assistance, please don't hesitate to contact our support team.</p>
+      <p>Best regards,<br>The MeroLoan Team</p>
+    </div>
+    <div class="footer">
+      <p>© 2025 MeroLoan. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+export const KYC_REJECTED_TEMPLATE = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #f44336; color: white; padding: 10px; text-align: center; }
+    .content { padding: 20px; border: 1px solid #ddd; }
+    .footer { margin-top: 20px; text-align: center; font-size: 12px; color: #777; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>MeroLoan - KYC Verification Update</h2>
+    </div>
+    <div class="content">
+      <p>Dear {userName},</p>
+      <p>We regret to inform you that your KYC (Know Your Customer) verification has been <strong>rejected</strong>.</p>
+      <p>Common reasons for rejection include:</p>
+      <ul>
+        <li>Unclear or incomplete identification documents</li>
+        <li>Mismatch between provided information and documents</li>
+        <li>Expired identification documents</li>
+        <li>Poor image quality of uploaded documents</li>
+      </ul>
+      <p>You can resubmit your KYC application with updated documents through your account dashboard.</p>
+      <p>If you have any questions or need assistance with resubmitting your KYC, please contact our support team.</p>
+      <p>Best regards,<br>The MeroLoan Team</p>
+    </div>
+    <div class="footer">
+      <p>© 2025 MeroLoan. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;

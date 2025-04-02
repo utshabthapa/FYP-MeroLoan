@@ -782,26 +782,7 @@ const UserProfile = () => {
                   >
                     All Loans
                   </button>
-                  <button
-                    onClick={() => setActiveTab("active")}
-                    className={`px-4 py-2 text-sm rounded-lg transition-colors ${
-                      activeTab === "active"
-                        ? "bg-gray-800 text-white"
-                        : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                    }`}
-                  >
-                    Active
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("completed")}
-                    className={`px-4 py-2 text-sm rounded-lg transition-colors ${
-                      activeTab === "completed"
-                        ? "bg-gray-800 text-white"
-                        : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                    }`}
-                  >
-                    Completed
-                  </button>
+
                   <button
                     onClick={() => setActiveTab("given")}
                     className={`px-4 py-2 text-sm rounded-lg transition-colors ${
@@ -833,18 +814,20 @@ const UserProfile = () => {
                   </div>
                 </div>
               ) : filteredLoans.length > 0 ? (
-                <AnimatePresence>
-                  <div className="space-y-2">
-                    {filteredLoans.map((contract) => (
-                      <LoanItem
-                        key={contract._id}
-                        loan={contract}
-                        userId={user._id}
-                        onClick={() => navigateToLoanDetails(contract.loan)}
-                      />
-                    ))}
-                  </div>
-                </AnimatePresence>
+                <div className="h-60 overflow-y-auto pr-2 custom-scrollbar">
+                  <AnimatePresence>
+                    <div className="space-y-2">
+                      {filteredLoans.map((contract) => (
+                        <LoanItem
+                          key={contract._id}
+                          loan={contract}
+                          userId={user._id}
+                          onClick={() => navigateToLoanDetails(contract.loan)}
+                        />
+                      ))}
+                    </div>
+                  </AnimatePresence>
+                </div>
               ) : (
                 <div className="bg-gray-50 rounded-lg p-8 text-center">
                   <CreditCard className="mx-auto h-12 w-12 text-gray-400 mb-3" />

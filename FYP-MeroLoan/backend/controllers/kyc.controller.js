@@ -1,6 +1,10 @@
 import { KYC } from "../models/kyc.model.js";
 import { User } from "../models/user.model.js";
 import createError from "http-errors";
+import {
+  sendKYCApprovedEmail,
+  sendKYCRejectedEmail,
+} from "../mailtrap/emails.js";
 
 // Submit KYC (with file uploads)
 export const submitKYC = async (req, res) => {
@@ -127,7 +131,7 @@ export const fetchSingleKYCRequest = async (req, res) => {
   }
 };
 
-// Approve or Reject KYC (Admin)
+// Updated verifyKYC function
 export const verifyKYC = async (req, res) => {
   const { kycId, status } = req.body;
 
@@ -153,8 +157,14 @@ export const verifyKYC = async (req, res) => {
     // Update user's creditScore based on KYC status
     if (status === "approved") {
       user.creditScore = Math.min(user.creditScore + 2, 100); // Increase by 2, but cap at 100
+
+      // Send KYC approval email
+      await sendKYCApprovedEmail(user.email, user.name);
     } else if (status === "rejected") {
       user.creditScore = Math.max(user.creditScore - 2, 0); // Decrease by 2, but not below 0
+
+      // Send KYC rejection email
+      await sendKYCRejectedEmail(user.email, user.name);
     }
 
     // Save the updated user
@@ -166,6 +176,11 @@ export const verifyKYC = async (req, res) => {
       data: kyc,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to verify KYC" });
+    console.error("Error in verifyKYC:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to verify KYC",
+      error: error.message,
+    });
   }
 };

@@ -22,6 +22,9 @@ import {
   ChevronRight,
   DollarSign,
   Loader2,
+  FileText,
+  Users,
+  BarChart3,
 } from "lucide-react";
 import defaultUser from "../assets/userProfile.png";
 import { toast } from "react-toastify";
@@ -59,11 +62,11 @@ const LoanItem = ({ loan, userId, onClick }) => {
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.01 }}
-      className="flex items-start space-x-4 p-4 hover:bg-gray-50 rounded-lg transition-all cursor-pointer border border-gray-100 mb-3 shadow-sm"
+      className="flex items-start p-4 hover:bg-gray-50 rounded-lg transition-all cursor-pointer border border-gray-100 mb-3 shadow-sm"
       onClick={onClick}
     >
       <div
-        className={`rounded-full p-2 ${
+        className={`rounded-full p-2 mr-3 ${
           isLender ? "bg-blue-50" : "bg-green-50"
         }`}
       >
@@ -149,7 +152,7 @@ const CreditScoreCard = ({ score }) => {
   const percentage = Math.min(Math.max(score, 0), 100);
 
   return (
-    <div className="mb-6 p-5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 shadow-sm">
+    <div className="p-5 bg-white rounded-lg border border-gray-200 shadow-sm">
       <div className="flex justify-between items-start">
         <div className="flex items-center">
           <Award className="w-5 h-5 text-gray-700 mr-2" />
@@ -361,204 +364,133 @@ const PublicUserProfile = () => {
           Back
         </button>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-8"
-        >
-          {/* Left Column */}
-          <div className="space-y-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+          <div className="relative">
+            <div className="h-40 bg-gradient-to-br from-gray-900 to-gray-700"></div>
+            <div className="absolute -bottom-16 left-8">
+              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white bg-white shadow-md">
+                <img
+                  src={userProfile?.image || defaultUser}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+            <div className="absolute top-4 right-4">
+              <KycStatusBadge status={userProfile?.kycStatus || "notApplied"} />
+            </div>
+          </div>
+
+          <div className="pt-20 pb-6 px-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="flex items-center">
+                  <h1 className="text-2xl font-bold text-gray-800">
+                    {userProfile?.name}
+                  </h1>
+                  {userProfile?.kycStatus === "approved" && (
+                    <CheckCircle2 className="ml-2 text-green-500" size={20} />
+                  )}
+                </div>
+                <p className="text-gray-500 text-sm mt-1">
+                  {userProfile?.email}
+                </p>
+              </div>
+
+              <div className="mt-4 md:mt-0 flex items-center space-x-2">
+                <span className="text-sm text-gray-500 flex items-center">
+                  <Calendar className="w-4 h-4 mr-1" />
+                  Member since{" "}
+                  {formatDate(userProfile?.createdAt || new Date())}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Left Column - User Stats */}
+          <div className="md:col-span-1">
             <motion.div
-              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
+              className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6"
             >
-              <div className="h-36 bg-gradient-to-r from-gray-800 to-gray-900 relative">
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
-                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white relative bg-white shadow-md">
-                    <img
-                      src={userProfile?.image || defaultUser}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-20 pb-6 px-6">
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center">
-                    <h2 className="text-2xl font-bold text-gray-800">
-                      {userProfile?.name}
-                    </h2>
-                    {userProfile?.kycStatus === "approved" && (
-                      <CheckCircle2 className="ml-2 text-green-500" size={20} />
-                    )}
-                  </div>
-                  <p className="text-gray-500 text-sm mt-1">
-                    {userProfile?.email}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    Member since{" "}
-                    {formatDate(userProfile?.createdAt || new Date())}
-                  </p>
-
-                  <div className="mt-4">
-                    <KycStatusBadge
-                      status={userProfile?.kycStatus || "notApplied"}
-                    />
-                  </div>
-                </div>
-
-                {/* Account stats
-                {userProfile.totalBorrowed !== undefined &&
-                  userProfile.totalLent !== undefined && (
-                    <div className="grid grid-cols-2 gap-4 mt-6">
-                      <div className="bg-gray-50 rounded-lg p-3 text-center">
-                        <p className="text-xs text-gray-500">Total Borrowed</p>
-                        <p className="text-lg font-semibold text-gray-800">
-                          Rs. {formatCurrency(userProfile?.totalBorrowed || 0)}
-                        </p>
-                      </div>
-                      <div className="bg-gray-50 rounded-lg p-3 text-center">
-                        <p className="text-xs text-gray-500">Total Lent</p>
-                        <p className="text-lg font-semibold text-gray-800">
-                          Rs. {formatCurrency(userProfile?.totalLent || 0)}
-                        </p>
-                      </div>
-                    </div>
-                  )} */}
-              </div>
-            </motion.div>
-
-            {/* Contact or action buttons could go here */}
-            {currentUser && currentUser._id !== userProfile._id && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
-              >
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                  Actions
-                </h3>
-                <div className="space-y-3">
-                  <button
-                    onClick={() => navigate(`/messages/${userProfile._id}`)}
-                    className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors flex items-center justify-center"
-                  >
-                    <Mail className="w-4 h-4 mr-2" />
-                    Send Message
-                  </button>
-
-                  {currentUser?.kycStatus === "approved" && (
-                    <button
-                      onClick={() =>
-                        navigate(`/loan-form?lender=${userProfile._id}`)
-                      }
-                      className="w-full py-2 px-4 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center justify-center"
-                    >
-                      <DollarSign className="w-4 h-4 mr-2" />
-                      Request Loan
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Right Column */}
-          <div className="md:col-span-2 space-y-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
-            >
-              <h2 className="text-xl font-semibold mb-6 flex items-center">
+              <h2 className="text-lg font-semibold mb-4 flex items-center">
                 <User className="w-5 h-5 mr-2 text-gray-600" />
                 User Information
               </h2>
 
-              {/* Credit Score Card */}
-              <CreditScoreCard score={userProfile?.creditScore || 50} />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                      <User className="w-4 h-4" />
-                    </div>
-                    <div className="mt-1 p-2 pl-10 block w-full rounded-md border border-gray-200 bg-gray-50">
-                      {userProfile?.name}
-                    </div>
+              <div className="space-y-6">
+                <div className="flex items-center">
+                  <Mail className="w-4 h-4 text-gray-500 mr-3" />
+                  <div>
+                    <p className="text-xs text-gray-500">Email</p>
+                    <p className="text-sm font-medium">{userProfile?.email}</p>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                      <Mail className="w-4 h-4" />
-                    </div>
-                    <div className="mt-1 p-2 pl-10 block w-full rounded-md border border-gray-200 bg-gray-50">
-                      {userProfile?.email}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    User Status
-                  </label>
-                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                      <Shield className="w-4 h-4" />
-                    </div>
-                    <div className="mt-1 p-2 pl-10 block w-full rounded-md border border-gray-200 bg-gray-50">
+                <div className="flex items-center">
+                  <Shield className="w-4 h-4 text-gray-500 mr-3" />
+                  <div>
+                    <p className="text-xs text-gray-500">Verification Status</p>
+                    <p className="text-sm font-medium">
                       {userProfile?.isVerified
                         ? "Verified User"
                         : "Unverified User"}
-                    </div>
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Member Since
-                  </label>
-                  <div className="relative">
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                      <Calendar className="w-4 h-4" />
-                    </div>
-                    <div className="mt-1 p-2 pl-10 block w-full rounded-md border border-gray-200 bg-gray-50">
+                <div className="flex items-center">
+                  <Calendar className="w-4 h-4 text-gray-500 mr-3" />
+                  <div>
+                    <p className="text-xs text-gray-500">Member Since</p>
+                    <p className="text-sm font-medium">
                       {formatDate(userProfile?.createdAt)}
-                    </div>
+                    </p>
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* User's Active Loans Section - Only visible to KYC verified users */}
-            {currentUser?.kycStatus === "approved" && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
-              >
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold flex items-center">
-                    <CreditCard className="w-5 h-5 mr-2 text-gray-600" />
-                    Loan History
-                  </h2>
-                </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-white p-6 rounded-xl shadow-sm border border-gray-200"
+            >
+              <h2 className="text-lg font-semibold mb-5 flex items-center">
+                <Award className="w-5 h-5 mr-2 text-gray-600" />
+                Credit Score
+              </h2>
+
+              <CreditScoreCard score={userProfile?.creditScore || 50} />
+
+              <div className="mt-5 text-center">
+                <p className="text-sm text-gray-500">
+                  This user's credit score reflects their loan repayment history
+                  and reliability as a borrower or lender.
+                </p>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Right Column - Loan History */}
+          {/* Right Column - Loan History */}
+          {currentUser?.kycStatus === "approved" && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="md:col-span-2"
+            >
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 className="text-xl font-semibold mb-6 flex items-center">
+                  <FileText className="w-5 h-5 mr-2 text-gray-600" />
+                  Loan History
+                </h2>
 
                 {/* Loan tabs */}
                 <div className="border-b border-gray-200 mb-4">
@@ -573,26 +505,7 @@ const PublicUserProfile = () => {
                     >
                       All Loans
                     </button>
-                    <button
-                      onClick={() => setActiveTab("active")}
-                      className={`px-4 py-2 text-sm rounded-lg transition-colors ${
-                        activeTab === "active"
-                          ? "bg-gray-800 text-white"
-                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                      }`}
-                    >
-                      Active
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("completed")}
-                      className={`px-4 py-2 text-sm rounded-lg transition-colors ${
-                        activeTab === "completed"
-                          ? "bg-gray-800 text-white"
-                          : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                      }`}
-                    >
-                      Completed
-                    </button>
+
                     <button
                       onClick={() => setActiveTab("given")}
                       className={`px-4 py-2 text-sm rounded-lg transition-colors ${
@@ -623,39 +536,149 @@ const PublicUserProfile = () => {
                       <p className="mt-4 text-gray-500">Loading loans...</p>
                     </div>
                   </div>
-                ) : filteredLoans.length > 0 ? (
-                  <AnimatePresence>
-                    <div className="space-y-2">
-                      {filteredLoans.map((contract) => (
-                        <LoanItem
-                          key={contract._id}
-                          loan={contract}
-                          userId={userProfile._id}
-                          onClick={() => navigateToLoanDetails(contract.loan)}
-                        />
-                      ))}
-                    </div>
-                  </AnimatePresence>
                 ) : (
-                  <div className="bg-gray-50 rounded-lg p-8 text-center">
-                    <CreditCard className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                    <p className="text-gray-600 mb-2">
-                      {activeTab === "all"
-                        ? "This user doesn't have any loans at the moment."
-                        : activeTab === "active"
-                        ? "This user doesn't have any active loans."
-                        : activeTab === "completed"
-                        ? "This user doesn't have any completed loans."
-                        : activeTab === "given"
-                        ? "This user hasn't given any loans yet."
-                        : "This user hasn't received any loans yet."}
-                    </p>
+                  <div className="h-60 overflow-y-auto pr-2 custom-scrollbar">
+                    {filteredLoans.length > 0 ? (
+                      <AnimatePresence>
+                        <div className="space-y-2">
+                          {filteredLoans.map((contract) => (
+                            <LoanItem
+                              key={contract._id}
+                              loan={contract}
+                              userId={userProfile._id}
+                              onClick={() =>
+                                navigateToLoanDetails(contract.loan)
+                              }
+                            />
+                          ))}
+                        </div>
+                      </AnimatePresence>
+                    ) : (
+                      <div className="bg-gray-50 rounded-lg p-8 text-center">
+                        <CreditCard className="mx-auto h-12 w-12 text-gray-400 mb-3" />
+                        <p className="text-gray-600 mb-2">
+                          {activeTab === "all"
+                            ? "This user doesn't have any loans at the moment."
+                            : activeTab === "active"
+                            ? "This user doesn't have any active loans."
+                            : activeTab === "completed"
+                            ? "This user doesn't have any completed loans."
+                            : activeTab === "given"
+                            ? "This user hasn't given any loans yet."
+                            : "This user hasn't received any loans yet."}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
-              </motion.div>
-            )}
-          </div>
-        </motion.div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center">
+                    <BarChart3 className="w-5 h-5 mr-2 text-gray-600" />
+                    Loan Activity
+                  </h3>
+                  <div className="flex justify-between items-center">
+                    <div className="text-center p-4 bg-gray-50 rounded-lg flex-1 mr-2">
+                      <p className="text-sm text-gray-500">Total Borrowed</p>
+                      <p className="text-xl font-bold text-gray-800">
+                        Rs. {formatCurrency(userProfile?.totalBorrowed || 0)}
+                      </p>
+                    </div>
+                    <div className="text-center p-4 bg-gray-50 rounded-lg flex-1 ml-2">
+                      <p className="text-sm text-gray-500">Total Lent</p>
+                      <p className="text-xl font-bold text-gray-800">
+                        Rs. {formatCurrency(userProfile?.totalLent || 0)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center">
+                    <Users className="w-5 h-5 mr-2 text-gray-600" />
+                    Lending History
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">
+                        Active Loans:
+                      </span>
+                      <span className="font-medium">
+                        {
+                          activeContracts.filter((c) => c.status === "ACTIVE")
+                            .length
+                        }
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">
+                        Completed Loans:
+                      </span>
+                      <span className="font-medium">
+                        {
+                          activeContracts.filter(
+                            (c) => c.status === "COMPLETED"
+                          ).length
+                        }
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">As Lender:</span>
+                      <span className="font-medium">
+                        {
+                          activeContracts.filter(
+                            (c) => c.lender === userProfile._id
+                          ).length
+                        }
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">
+                        As Borrower:
+                      </span>
+                      <span className="font-medium">
+                        {
+                          activeContracts.filter(
+                            (c) => c.lender !== userProfile._id
+                          ).length
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Message for non-KYC verified users */}
+          {currentUser?.kycStatus !== "approved" && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="md:col-span-2"
+            >
+              <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 text-center">
+                <Shield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                  KYC Verification Required
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Complete your KYC verification to view this user's loan
+                  history and activity.
+                </p>
+                <button
+                  onClick={() => navigate(`/kyc-form/${currentUser?._id}`)}
+                  className="px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Complete KYC Verification
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </div>
       </div>
     </div>
   );

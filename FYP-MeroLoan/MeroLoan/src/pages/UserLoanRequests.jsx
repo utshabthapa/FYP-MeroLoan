@@ -2,14 +2,14 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLoanStore } from "../store/loanStore";
 import { formatDate } from "../utils/date";
-import { useAuthStore } from "../store/authStore"; // Assuming you have an auth store
+import { useAuthStore } from "../store/authStore";
 import { motion } from "framer-motion";
 
 import Navbar from "@/components/navbar";
 
 const UserLoanRequests = () => {
   const { loans, isLoading, error, fetchLoans } = useLoanStore();
-  const { user } = useAuthStore(); // Get current user from auth store
+  const { user } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,8 +20,10 @@ const UserLoanRequests = () => {
     navigate(`/loan-details/${loanId}`);
   };
 
-  // Filter loans for current user
-  const userLoans = loans.filter((loan) => loan.userId._id === user?._id);
+  // Filter loans for current user and exclude completed loans
+  const userLoans = loans.filter(
+    (loan) => loan.userId._id === user?._id && loan.status !== "completed"
+  );
 
   return (
     <>
@@ -63,7 +65,7 @@ const UserLoanRequests = () => {
               ) : userLoans.length === 0 ? (
                 <div className="p-12 text-center">
                   <div className="text-gray-400 text-lg mb-4">
-                    You haven't made any loan requests yet
+                    You don't have any active loan requests
                   </div>
                   <button
                     onClick={() => navigate("/apply-loan")}

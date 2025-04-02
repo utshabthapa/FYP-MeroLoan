@@ -3,6 +3,8 @@ import {
   PASSWORD_RESET_REQUEST_TEMPLATE,
   PASSWORD_RESET_SUCCESS_TEMPLATE,
   VERIFICATION_EMAIL_TEMPLATE,
+  KYC_APPROVED_TEMPLATE,
+  KYC_REJECTED_TEMPLATE,
 } from "./emailTemplate.js";
 import dotenv from "dotenv";
 dotenv.config();
@@ -76,5 +78,32 @@ export const sendPasswordResetSuccessEmail = async (email) => {
     throw new Error(
       `Error sending password reset success email: ${error.message}`
     );
+  }
+};
+
+// Add these functions to your emails.js file
+export const sendKYCApprovedEmail = async (email, name) => {
+  try {
+    await transporter.sendMail({
+      from: sender,
+      to: email,
+      subject: "MeroLoan - Your KYC has been approved",
+      html: KYC_APPROVED_TEMPLATE.replace("{userName}", name),
+    });
+  } catch (error) {
+    throw new Error(`Error sending KYC approval email: ${error.message}`);
+  }
+};
+
+export const sendKYCRejectedEmail = async (email, name) => {
+  try {
+    await transporter.sendMail({
+      from: sender,
+      to: email,
+      subject: "MeroLoan - Your KYC needs attention",
+      html: KYC_REJECTED_TEMPLATE.replace("{userName}", name),
+    });
+  } catch (error) {
+    throw new Error(`Error sending KYC rejection email: ${error.message}`);
   }
 };

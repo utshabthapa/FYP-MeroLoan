@@ -149,7 +149,7 @@ const LoanDetails = () => {
     }
   };
 
-  // New function to handle repayments by borrowers
+  // Updated function to handle repayments by borrowers
   const handleRepayment = async (
     paymentAmount,
     isMilestone = false,
@@ -161,9 +161,12 @@ const LoanDetails = () => {
     }
 
     try {
+      // Round the payment amount to a whole number (no decimal places)
+      const roundedAmount = Math.ceil(paymentAmount);
+
       const repaymentDetails = {
         loanId: loan._id,
-        amount: paymentAmount,
+        amount: roundedAmount,
         borrowerId: user._id,
         lenderId: loan.activeContract?.lender || null,
         isMilestonePayment: isMilestone,
@@ -238,12 +241,15 @@ const LoanDetails = () => {
       );
     }
   };
+
+  // Updated function to calculate repayment schedule with annual interest rate
   // Updated function to calculate repayment schedule with annual interest rate
   const calculateRepaymentSchedule = () => {
     if (!loan) return [];
 
     const principal = parseFloat(loan.loanAmount);
-    const annualInterestRate = getAdjustedInterestRate();
+    // For borrower repayment, always use the original interest rate, not the insurance-adjusted one
+    const annualInterestRate = parseFloat(loan.interestRate);
     const durationDays = parseInt(loan.duration);
 
     // Calculate interest for the actual loan period (convert annual rate to daily rate)
@@ -255,7 +261,8 @@ const LoanDetails = () => {
       const endDate = new Date(
         new Date(loan.appliedAt).getTime() + durationDays * 24 * 60 * 60 * 1000
       );
-      return [{ date: endDate, amount: totalAmount }];
+      // Round up the amount to ensure no decimals
+      return [{ date: endDate, amount: Math.ceil(totalAmount) }];
     } else {
       const milestones = parseInt(loan.milestones);
       const amountPerMilestone = totalAmount / milestones;
@@ -267,12 +274,13 @@ const LoanDetails = () => {
           startDate.getTime() +
             daysPerMilestone * (index + 1) * 24 * 60 * 60 * 1000
         ),
-        amount: amountPerMilestone,
+        // Round up the amount to ensure no decimals
+        amount: Math.ceil(amountPerMilestone),
       }));
     }
   };
 
-  // Also update the Loan Terms section to display the interest amount clearly
+  // This function is for lender's perspective (with potential insurance discount)
   const getAdjustedInterestRate = () => {
     const baseRate = parseFloat(loan.interestRate);
     return withInsurance ? baseRate - baseRate * 0.15 : baseRate;
@@ -281,7 +289,12 @@ const LoanDetails = () => {
   // Calculate interest amount for display
   const calculateInterestAmount = () => {
     const principal = parseFloat(loan.loanAmount);
-    const annualRate = getAdjustedInterestRate();
+    // For display purposes, use the appropriate interest rate
+    const isUserLoan = user?._id === loan.userId._id;
+    // Borrowers always see the original interest rate
+    const annualRate = isUserLoan
+      ? parseFloat(loan.interestRate)
+      : getAdjustedInterestRate();
     const durationDays = parseInt(loan.duration);
 
     return (principal * annualRate * durationDays) / (100 * 365);
@@ -342,7 +355,7 @@ const LoanDetails = () => {
         <button
           onClick={handleDeleteLoan}
           disabled={isDeleting}
-          className="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-rlassNa focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
+          className="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
         >
           {isDeleting ? "Deleting..." : "Delete Loan Request"}
         </button>
@@ -355,11 +368,6 @@ const LoanDetails = () => {
     // Find the active contract to get actual repayment schedule
     const activeContract = loan.activeContract;
 
-    // Debugging logs
-    console.log("Loan:", loan);
-    console.log("Active Contract:", activeContract);
-    console.log("Repayment Schedule:", activeContract?.repaymentSchedule);
-
     // Handle case where activeContract or repaymentSchedule is missing
     if (!activeContract || !activeContract.repaymentSchedule) {
       return (
@@ -371,17 +379,27 @@ const LoanDetails = () => {
         </button>
       );
     }
+
+    // Find the next unpaid milestone
     const nextUnpaidMilestone =
       activeContract?.repaymentSchedule.findIndex(
         (payment) => payment.status === "pending"
       ) ?? -1;
 
     if (loan.repaymentType === "one-time") {
-      const totalAmount =
-        activeContract?.totalRepaymentAmount || repaymentSchedule[0].amount;
+      // Calculate total amount with interest
+      const principal = parseFloat(loan.loanAmount);
+      const annualRate = parseFloat(loan.interestRate); // Original interest rate for borrower
+      const durationDays = parseInt(loan.duration);
+      const interestAmount =
+        (principal * annualRate * durationDays) / (100 * 365);
+      const totalAmount = principal + interestAmount;
+      // Round up the total amount to ensure no decimals
+      const roundedTotalAmount = Math.ceil(totalAmount);
+
       return (
         <button
-          onClick={() => handleRepayment(totalAmount, false)}
+          onClick={() => handleRepayment(roundedTotalAmount, false)}
           disabled={isProcessing}
           className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
         >
@@ -389,14 +407,25 @@ const LoanDetails = () => {
         </button>
       );
     } else if (nextUnpaidMilestone !== -1) {
-      const milestoneAmount =
-        activeContract?.repaymentSchedule[nextUnpaidMilestone].amountDue ||
-        repaymentSchedule[nextUnpaidMilestone]?.amount;
+      // For milestone payments, use the correct calculated amount for each milestone
+      const totalAmount =
+        parseFloat(loan.loanAmount) +
+        (parseFloat(loan.loanAmount) *
+          parseFloat(loan.interestRate) *
+          parseInt(loan.duration)) /
+          (100 * 365);
+      const milestoneAmount = totalAmount / parseInt(loan.milestones);
+      // Round up the milestone amount to ensure no decimals
+      const roundedMilestoneAmount = Math.ceil(milestoneAmount);
 
       return (
         <button
           onClick={() =>
-            handleRepayment(milestoneAmount, true, nextUnpaidMilestone + 1)
+            handleRepayment(
+              roundedMilestoneAmount,
+              true,
+              nextUnpaidMilestone + 1
+            )
           }
           disabled={isProcessing}
           className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50"
@@ -475,7 +504,6 @@ const LoanDetails = () => {
                       />
                     </svg>
                     <p>
-                      {/* {getKycStatusMessage()} */}
                       You need to complete KYC verification before you can lend
                       money on our platform.
                     </p>
@@ -525,10 +553,14 @@ const LoanDetails = () => {
                         </p>
                         <p className="text-gray-600">
                           <span className="font-medium">Interest Rate:</span>{" "}
-                          <span className={withInsurance ? "line-through" : ""}>
+                          <span
+                            className={
+                              !isUserLoan && withInsurance ? "line-through" : ""
+                            }
+                          >
                             {loan.interestRate}%
                           </span>
-                          {withInsurance && (
+                          {!isUserLoan && withInsurance && (
                             <span className="ml-2 text-gray-800">
                               {getAdjustedInterestRate().toFixed(2)}%
                             </span>
@@ -583,7 +615,10 @@ const LoanDetails = () => {
                           </div>
                           <div className="text-right">
                             <p className="font-medium text-gray-800">
-                              Rs.{payment.amount.toLocaleString()}
+                              Rs.
+                              {payment.amount.toLocaleString(undefined, {
+                                maximumFractionDigits: 2,
+                              })}
                             </p>
                             <div className="flex items-center space-x-2">
                               <p className="text-sm text-gray-500">
