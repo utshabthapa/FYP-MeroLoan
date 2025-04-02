@@ -32,6 +32,8 @@ import PublicUserProfile from "./pages/PublicUserProfile";
 import BanUsers from "./pages/BanUsers";
 import AppealPage from "./pages/AppealPage";
 import AdminAppealsPage from "./pages/AdminAppealsPage";
+import ActiveContracts from "./pages/ActiveContracts";
+import ContractDetailView from "./pages/ContractDetailView";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -333,6 +335,22 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/active-contracts"
+            element={
+              <ProtectedRoute>
+                <ActiveContracts />
+              </ProtectedRoute>
+            }
+          />
+          {/* <Route
+            path="/contract-detail-view"
+            element={
+              <ProtectedRoute>
+                <ContractDetailView />
+              </ProtectedRoute>
+            }
+          /> */}
         </Routes>
       </>
     </BrowserRouter>

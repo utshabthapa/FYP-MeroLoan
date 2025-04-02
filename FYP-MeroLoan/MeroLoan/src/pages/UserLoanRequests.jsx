@@ -20,16 +20,6 @@ const UserLoanRequests = () => {
     navigate(`/loan-details/${loanId}`);
   };
 
-  // if (error) {
-  //   return (
-  //     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center">
-  //       <div className="bg-white p-6 rounded-lg shadow-lg text-gray-800">
-  //         <p className="text-lg">{error}</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
   // Filter loans for current user
   const userLoans = loans.filter((loan) => loan.userId._id === user?._id);
 
