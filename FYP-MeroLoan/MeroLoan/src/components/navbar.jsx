@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react"; // Add useContext
 import { useAuthStore } from "../store/authStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import { Link, useLocation } from "react-router-dom";
@@ -20,8 +20,7 @@ import {
 import logo from "../assets/MeroLoan Logo.svg";
 import { motion, AnimatePresence } from "framer-motion";
 import BanAlert from "./BanAlert";
-
-const socket = io("http://localhost:5000");
+import { SocketContext } from "../socketContext"; // Import the context
 
 // Helper function to format time
 const formatTimeAgo = (timestamp) => {
@@ -241,6 +240,7 @@ const NotificationPanel = ({
 };
 
 const Navbar = () => {
+  const socket = useContext(SocketContext); // Access socket from context
   const { isAuthenticated, user } = useAuthStore();
   const {
     notifications,
@@ -285,28 +285,44 @@ const Navbar = () => {
   }, [isAuthenticated, user?._id, fetchNotifications]);
 
   // Listen for real-time notifications
+  // useEffect(() => {
+  //   if (isAuthenticated && user?._id) {
+  //     socket.emit("joinUserRoom", user._id);
+
+  //     const handleNewNotification = (notification) => {
+  //       addNotification(notification);
+
+  //       if ("Notification" in window && Notification.permission === "granted") {
+  //         new Notification("MeroLoan Notification", {
+  //           body: notification.message,
+  //           icon: "/favicon.ico",
+  //         });
+  //       }
+  //     };
+
+  //     socket.on("newNotification", handleNewNotification);
+
+  //     return () => {
+  //       socket.emit("leaveUserRoom", user._id);
+  //       socket.off("newNotification", handleNewNotification);
+  //     };
+  //   }
+  // }, [isAuthenticated, user?._id, addNotification]);
+
   useEffect(() => {
     if (isAuthenticated && user?._id) {
       socket.emit("joinUserRoom", user._id);
 
       socket.on("newNotification", (notification) => {
         addNotification(notification);
-
-        // Show browser notification if supported
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("MeroLoan Notification", {
-            body: notification.message,
-            icon: "/favicon.ico", // Adjust path to your favicon
-          });
-        }
       });
 
       return () => {
-        socket.disconnect();
+        socket.emit("leaveUserRoom", user._id);
+        socket.off("newNotification");
       };
     }
-  }, [isAuthenticated, user?._id, addNotification]);
-
+  }, [socket, isAuthenticated, user?._id, addNotification]);
   // Request notification permission
   useEffect(() => {
     if ("Notification" in window && Notification.permission !== "denied") {

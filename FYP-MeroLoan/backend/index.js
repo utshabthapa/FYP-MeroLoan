@@ -15,6 +15,9 @@ import transactionRoutes from "./routes/transaction.route.js";
 import notificationRoutes from "./routes/notification.route.js";
 import userProfileRoutes from "./routes/userProfile.route.js";
 import appealRoutes from "./routes/appeal.route.js";
+import reminderRoutes from "./routes/reminder.route.js"; // Import your new route
+// Now add code to your index.js or server.js file to start the reminder scheduler
+import { startRepaymentReminderScheduler } from "./utils/repaymentReminder.js";
 
 import cookieParser from "cookie-parser";
 import path from "path";
@@ -56,6 +59,8 @@ io.on("connection", (socket) => {
   });
 });
 
+// Add this after your app initialization and socket setup
+startRepaymentReminderScheduler();
 // Middleware
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -74,6 +79,7 @@ app.use("/api/transaction", transactionRoutes);
 app.use("/api/notification", notificationRoutes);
 app.use("/api/users", userProfileRoutes);
 app.use("/api/appeals", appealRoutes);
+app.use("/api/reminders", reminderRoutes);
 
 // Start the server
 server.listen(PORT, () => {

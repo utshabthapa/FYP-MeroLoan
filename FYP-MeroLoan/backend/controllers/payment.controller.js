@@ -405,9 +405,46 @@ export const repaymentSuccess = async (req, res) => {
       (milestone) => milestone.status === "paid"
     );
 
+    // Inside the repaymentSuccess function, after checking if all milestones are paid
     if (allPaid) {
       activeContract.status = "completed";
       loan.status = "completed";
+
+      // Fetch full borrower and lender details if needed
+      const borrowerFull = await User.findById(
+        loan.pendingRepaymentDetails.borrowerId
+      );
+      const lenderFull = await User.findById(
+        loan.pendingRepaymentDetails.lenderId
+      );
+
+      // Create notification for borrower about contract completion
+      const borrowerCompletionNotification = new Notification({
+        userId: loan.pendingRepaymentDetails.borrowerId,
+        message: `Your loan contract with ${lender.name} has been completed. Thank you for repaying on time.`,
+        timestamp: new Date(),
+      });
+      await borrowerCompletionNotification.save();
+
+      // Create notification for lender about contract completion
+      const lenderCompletionNotification = new Notification({
+        userId: loan.pendingRepaymentDetails.lenderId,
+        message: `Your loan contract with ${borrower.name} has been completed. The loan has been fully repaid.`,
+        timestamp: new Date(),
+      });
+      await lenderCompletionNotification.save();
+
+      // Emit real-time notification to the borrower
+      io.to(loan.pendingRepaymentDetails.borrowerId).emit("newNotification", {
+        message: borrowerCompletionNotification.message,
+        timestamp: borrowerCompletionNotification.timestamp,
+      });
+
+      // Emit real-time notification to the lender
+      io.to(loan.pendingRepaymentDetails.lenderId).emit("newNotification", {
+        message: lenderCompletionNotification.message,
+        timestamp: lenderCompletionNotification.timestamp,
+      });
     }
 
     // Save the updated active contract
@@ -488,13 +525,10 @@ export const repaymentSuccess = async (req, res) => {
     await borrowerNotification.save();
 
     // Emit real-time notification to the borrower
-    io.to(loan.pendingRepaymentDetails.borrowerId.toString()).emit(
-      "newNotification",
-      {
-        message: borrowerNotification.message,
-        timestamp: borrowerNotification.timestamp,
-      }
-    );
+    io.to(loan.pendingRepaymentDetails.borrowerId).emit("newNotification", {
+      message: borrowerNotification.message,
+      timestamp: borrowerNotification.timestamp,
+    });
 
     // Notification for Lender
     const lenderNotification = new Notification({
@@ -507,13 +541,10 @@ export const repaymentSuccess = async (req, res) => {
     await lenderNotification.save();
 
     // Emit real-time notification to the lender
-    io.to(loan.pendingRepaymentDetails.lenderId.toString()).emit(
-      "newNotification",
-      {
-        message: lenderNotification.message,
-        timestamp: lenderNotification.timestamp,
-      }
-    );
+    io.to(loan.pendingRepaymentDetails.lenderId).emit("newNotification", {
+      message: lenderNotification.message,
+      timestamp: lenderNotification.timestamp,
+    });
 
     // Update user to add transaction ID
     const user = await User.findById(loan.pendingRepaymentDetails.borrowerId);

@@ -172,3 +172,43 @@ export const KYC_REJECTED_TEMPLATE = `
 </body>
 </html>
 `;
+
+// Add this to your emailTemplate.js file
+export const REPAYMENT_REMINDER_TEMPLATE = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #4682B4; color: white; padding: 10px 20px; text-align: center; }
+    .content { padding: 20px; border: 1px solid #ddd; }
+    .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #777; }
+    .button { background-color: #4682B4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>MeroLoan Payment Reminder</h2>
+    </div>
+    <div class="content">
+      <p>Dear {userName},</p>
+      <p>This is a friendly reminder that you have an upcoming loan repayment due on <strong>{dueDate}</strong>.</p>
+      <p><strong>Payment Details:</strong></p>
+      <ul>
+        <li>Amount Due: Rs. {amountDue}</li>
+        <li>Due Date: {dueDate}</li>
+      </ul>
+      <p>Please ensure that your account has sufficient funds for the repayment to avoid any late payment fees.</p>
+      <p>Log in to your MeroLoan account to view complete details or make an early payment.</p>
+      <p>Thank you for your prompt attention to this matter.</p>
+      <p>Best Regards,<br>MeroLoan Team</p>
+    </div>
+    <div class="footer">
+      <p>This is an automated message. Please do not reply to this email.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;

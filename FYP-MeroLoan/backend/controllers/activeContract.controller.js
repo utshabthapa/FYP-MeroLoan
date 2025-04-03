@@ -105,18 +105,6 @@ export const createActiveContract = async (req, res) => {
     await loan.save();
     await user.save();
 
-    // Create notification for borrower
-    const borrowerNotification = new Notification({
-      userId: borrower,
-      message: `A new loan contract has been created with ${
-        lenderUser.name
-      }. You've received Rs.${amount.toLocaleString()} with ${effectiveInterestRate.toFixed(
-        2
-      )}% interest rate.`,
-      timestamp: new Date(),
-    });
-    await borrowerNotification.save();
-
     // Create notification for lender
     const lenderNotification = new Notification({
       userId: lender,
@@ -129,13 +117,7 @@ export const createActiveContract = async (req, res) => {
     });
     await lenderNotification.save();
 
-    // Send real-time notifications via socket.io
-    io.to(borrower.toString()).emit("newNotification", {
-      message: borrowerNotification.message,
-      timestamp: borrowerNotification.timestamp,
-    });
-
-    io.to(lender.toString()).emit("newNotification", {
+    io.to(lender).emit("newNotification", {
       message: lenderNotification.message,
       timestamp: lenderNotification.timestamp,
     });
@@ -226,12 +208,12 @@ export const updateActiveContract = async (req, res) => {
       await lenderNotification.save();
 
       // Send real-time notifications via socket.io
-      io.to(updatedContract.borrower.toString()).emit("newNotification", {
+      io.to(updatedContract.borrower).emit("newNotification", {
         message: borrowerNotification.message,
         timestamp: borrowerNotification.timestamp,
       });
 
-      io.to(updatedContract.lender.toString()).emit("newNotification", {
+      io.to(updatedContract.lender).emit("newNotification", {
         message: lenderNotification.message,
         timestamp: lenderNotification.timestamp,
       });
@@ -327,12 +309,12 @@ export const completeActiveContract = async (req, res) => {
     await lenderNotification.save();
 
     // Send real-time notifications via socket.io
-    io.to(activeContract.borrower.toString()).emit("newNotification", {
+    io.to(activeContract.borrower).emit("newNotification", {
       message: borrowerNotification.message,
       timestamp: borrowerNotification.timestamp,
     });
 
-    io.to(activeContract.lender.toString()).emit("newNotification", {
+    io.to(activeContract.lender).emit("newNotification", {
       message: lenderNotification.message,
       timestamp: lenderNotification.timestamp,
     });

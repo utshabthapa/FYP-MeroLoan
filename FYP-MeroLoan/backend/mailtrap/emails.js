@@ -107,3 +107,37 @@ export const sendKYCRejectedEmail = async (email, name) => {
     throw new Error(`Error sending KYC rejection email: ${error.message}`);
   }
 };
+
+// Add this function to your emails.js file
+export const sendRepaymentReminderEmail = async (
+  email,
+  name,
+  dueDate,
+  amountDue
+) => {
+  try {
+    // Format the due date for better readability
+    const formattedDate = new Date(dueDate).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    // Format the amount with thousand separators
+    const formattedAmount = amountDue.toLocaleString();
+
+    await transporter.sendMail({
+      from: sender,
+      to: email,
+      subject: "MeroLoan - Upcoming Payment Reminder",
+      html: REPAYMENT_REMINDER_TEMPLATE.replace("{userName}", name)
+        .replace(/{dueDate}/g, formattedDate)
+        .replace("{amountDue}", formattedAmount),
+    });
+    console.log(`Repayment reminder email sent to ${email}`);
+    return true;
+  } catch (error) {
+    console.error(`Error sending repayment reminder email: ${error.message}`);
+    return false;
+  }
+};

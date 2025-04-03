@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import EmailVerificationPage from "./pages/EmailVerificationPage";
 import SignUp from "./pages/SignUp";
 import { useAuthStore } from "./store/authStore";
+import { useReminderStore } from "./store/reminderStore";
 import Dashboard from "./pages/Dashboard";
 import LoadingSpinner from "./components/LoadingSpinner";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -34,6 +35,10 @@ import AppealPage from "./pages/AppealPage";
 import AdminAppealsPage from "./pages/AdminAppealsPage";
 import ActiveContracts from "./pages/ActiveContracts";
 import ContractDetailView from "./pages/ContractDetailView";
+import { SocketContext } from "./socketContext"; // Import the context
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:5000");
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user, isCheckingAuth } = useAuthStore();
@@ -93,257 +98,279 @@ const RedirectAuthenticatedUser = ({ children }) => {
 
   return children;
 };
+
 function App() {
-  const { isCheckingAuth, checkAuth, isAuthenticated } = useAuthStore();
+  const { isCheckingAuth, checkAuth, isAuthenticated, user } = useAuthStore();
+  const { checkReminders } = useReminderStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
+  // New repayment reminder check
+  useEffect(() => {
+    // Only check reminders for authenticated users who are borrowers
+    if (isAuthenticated && user && user.isVerified && user.role === "user") {
+      const userId = user._id; // Get the user ID
+
+      // Check immediately once after login with the user ID
+      const checkUserReminders = () => {
+        checkReminders(userId);
+      };
+
+      checkUserReminders();
+
+      // Set up a regular interval check (every 12 hours)
+      const intervalId = setInterval(checkUserReminders, 12 * 60 * 60 * 1000);
+
+      // Clean up interval on component unmount
+      return () => clearInterval(intervalId);
+    }
+  }, [isAuthenticated, user, checkReminders]);
+
   if (isCheckingAuth) return <LoadingSpinner />;
 
   return (
-    <BrowserRouter>
-      <>
-        <ToastContainer />
-        <Routes>
-          <Route
-            path="/adminDashboard"
-            element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/kycApplications"
-            element={
-              <AdminRoute>
-                <KYCAdminPage />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/banUsers"
-            element={
-              <AdminRoute>
-                <BanUsers />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/kyc/:kycId"
-            element={
-              <AdminRoute>
-                <KYCDetailsPage />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/loanApplicationReview"
-            element={
-              <AdminRoute>
-                <LoanApplicationReview />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/loanApplicationDetails/:loanId"
-            element={
-              <AdminRoute>
-                <LoanApplicationDetail />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/balanceTransferRequests"
-            element={
-              <AdminRoute>
-                <BalanceTransferRequest />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/"
-            element={
-              // <ProtectedRoute>
-              <RedirectAuthenticatedUser>
-                <LandingPage />
-              </RedirectAuthenticatedUser>
-              // </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/userProfile"
-            element={
-              <ProtectedRoute>
-                <UserProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/user-profile/:userId"
-            element={
-              <ProtectedRoute>
-                <PublicUserProfile />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/transactionHistory"
-            element={
-              <ProtectedRoute>
-                <TransactionHistory />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <RedirectAuthenticatedUser>
-                <Login />
-              </RedirectAuthenticatedUser>
-            }
-          />
-          <Route
-            path="/signUp"
-            element={
-              <RedirectAuthenticatedUser>
-                <SignUp />
-              </RedirectAuthenticatedUser>
-            }
-          />
-          <Route
-            path="/forgot-password"
-            element={
-              <RedirectAuthenticatedUser>
-                <ForgotPassword />
-              </RedirectAuthenticatedUser>
-            }
-          />
-          <Route
-            path="/reset-password/:token"
-            element={
-              <RedirectAuthenticatedUser>
-                <ResetPassword />
-              </RedirectAuthenticatedUser>
-            }
-          />
-          <Route
-            path="/verify-email"
-            element={
-              <RedirectAuthenticatedUser>
-                <EmailVerificationPage />
-              </RedirectAuthenticatedUser>
-            }
-          />
-          {/* KYC Admin Page for Admins */}
-          <Route
-            path="/kyc-admin"
-            element={
-              <AdminRoute>
-                <KYCAdminPage />
-              </AdminRoute>
-            }
-          />
-          <Route
-            path="/banAppeals"
-            element={
-              <AdminRoute>
-                <AdminAppealsPage />
-              </AdminRoute>
-            }
-          />
-          {/* KYC Form Page for Users */}
-          <Route
-            path="/kyc-form/:_id"
-            element={
-              <ProtectedRoute>
-                <KYCForm />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/loan-form"
-            element={
-              <ProtectedRoute>
-                <LoanForm />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/loan-requests"
-            element={
-              <ProtectedRoute>
-                <LoanRequests />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/loan-details/:loanId"
-            element={
-              <ProtectedRoute>
-                <LoanDetails />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/userLoanRequests"
-            element={
-              <ProtectedRoute>
-                <UserLoanRequests />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/payment-success"
-            element={
-              <ProtectedRoute>
-                <PaymentSuccess />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/repayment-success"
-            element={
-              <ProtectedRoute>
-                <RepaymentSuccess />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/payment-failure"
-            element={
-              <ProtectedRoute>
-                <PaymentFailure />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/account/appeal"
-            element={
-              <ProtectedRoute>
-                <AppealPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/active-contracts"
-            element={
-              <ProtectedRoute>
-                <ActiveContracts />
-              </ProtectedRoute>
-            }
-          />
-          {/* <Route
+    <SocketContext.Provider value={socket}>
+      <BrowserRouter>
+        <>
+          <ToastContainer />
+          <Routes>
+            <Route
+              path="/adminDashboard"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/kycApplications"
+              element={
+                <AdminRoute>
+                  <KYCAdminPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/banUsers"
+              element={
+                <AdminRoute>
+                  <BanUsers />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/kyc/:kycId"
+              element={
+                <AdminRoute>
+                  <KYCDetailsPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/loanApplicationReview"
+              element={
+                <AdminRoute>
+                  <LoanApplicationReview />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/loanApplicationDetails/:loanId"
+              element={
+                <AdminRoute>
+                  <LoanApplicationDetail />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/balanceTransferRequests"
+              element={
+                <AdminRoute>
+                  <BalanceTransferRequest />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/"
+              element={
+                <RedirectAuthenticatedUser>
+                  <LandingPage />
+                </RedirectAuthenticatedUser>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/userProfile"
+              element={
+                <ProtectedRoute>
+                  <UserProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/user-profile/:userId"
+              element={
+                <ProtectedRoute>
+                  <PublicUserProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/transactionHistory"
+              element={
+                <ProtectedRoute>
+                  <TransactionHistory />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <RedirectAuthenticatedUser>
+                  <Login />
+                </RedirectAuthenticatedUser>
+              }
+            />
+            <Route
+              path="/signUp"
+              element={
+                <RedirectAuthenticatedUser>
+                  <SignUp />
+                </RedirectAuthenticatedUser>
+              }
+            />
+            <Route
+              path="/forgot-password"
+              element={
+                <RedirectAuthenticatedUser>
+                  <ForgotPassword />
+                </RedirectAuthenticatedUser>
+              }
+            />
+            <Route
+              path="/reset-password/:token"
+              element={
+                <RedirectAuthenticatedUser>
+                  <ResetPassword />
+                </RedirectAuthenticatedUser>
+              }
+            />
+            <Route
+              path="/verify-email"
+              element={
+                <RedirectAuthenticatedUser>
+                  <EmailVerificationPage />
+                </RedirectAuthenticatedUser>
+              }
+            />
+            {/* KYC Admin Page for Admins */}
+            <Route
+              path="/kyc-admin"
+              element={
+                <AdminRoute>
+                  <KYCAdminPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/banAppeals"
+              element={
+                <AdminRoute>
+                  <AdminAppealsPage />
+                </AdminRoute>
+              }
+            />
+            {/* KYC Form Page for Users */}
+            <Route
+              path="/kyc-form/:_id"
+              element={
+                <ProtectedRoute>
+                  <KYCForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/loan-form"
+              element={
+                <ProtectedRoute>
+                  <LoanForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/loan-requests"
+              element={
+                <ProtectedRoute>
+                  <LoanRequests />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/loan-details/:loanId"
+              element={
+                <ProtectedRoute>
+                  <LoanDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/userLoanRequests"
+              element={
+                <ProtectedRoute>
+                  <UserLoanRequests />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment-success"
+              element={
+                <ProtectedRoute>
+                  <PaymentSuccess />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/repayment-success"
+              element={
+                <ProtectedRoute>
+                  <RepaymentSuccess />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment-failure"
+              element={
+                <ProtectedRoute>
+                  <PaymentFailure />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account/appeal"
+              element={
+                <ProtectedRoute>
+                  <AppealPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/active-contracts"
+              element={
+                <ProtectedRoute>
+                  <ActiveContracts />
+                </ProtectedRoute>
+              }
+            />
+            {/* <Route
             path="/contract-detail-view"
             element={
               <ProtectedRoute>
@@ -351,9 +378,10 @@ function App() {
               </ProtectedRoute>
             }
           /> */}
-        </Routes>
-      </>
-    </BrowserRouter>
+          </Routes>
+        </>
+      </BrowserRouter>
+    </SocketContext.Provider>
   );
 }
 

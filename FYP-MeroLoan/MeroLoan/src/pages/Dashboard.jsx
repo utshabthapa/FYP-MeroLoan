@@ -82,52 +82,43 @@ const StatCard = ({ title, value, change, icon, color, delay }) => {
 };
 
 const LoanActivityChart = ({ data }) => {
-  // Format data for the chart
-  const chartData = data.map((item) => ({
-    name: `${item._id.month}/${item._id.year}`,
-    borrowed: item.borrowed || 0,
-    lent: item.lent || 0,
-  }));
+  // Format data for the chart - now using the simplified format
+  const chartData = [
+    {
+      name: "Borrowed",
+      value: data?.[0]?.borrowed || 0,
+      fill: "#8884d8",
+    },
+    {
+      name: "Lent",
+      value: data?.[0]?.lent || 0,
+      fill: "#82ca9d",
+    },
+  ];
 
   return (
     <div className="h-80 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
+        <RechartsBarChart
           data={chartData}
-          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          layout="vertical"
+          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
         >
-          <defs>
-            <linearGradient id="colorBorrowed" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
-            </linearGradient>
-            <linearGradient id="colorLent" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="name" />
-          <YAxis />
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis type="number" tick={{ fontSize: 12, fill: "#4B5563" }} />
+          <YAxis
+            dataKey="name"
+            type="category"
+            tick={{ fontSize: 12, fill: "#4B5563" }} // Darker gray and smaller text
+          />
           <Tooltip />
           <Legend />
-          <Area
-            type="monotone"
-            dataKey="borrowed"
-            stroke="#8884d8"
-            fillOpacity={1}
-            fill="url(#colorBorrowed)"
-            name="Borrowed"
-          />
-          <Area
-            type="monotone"
-            dataKey="lent"
-            stroke="#82ca9d"
-            fillOpacity={1}
-            fill="url(#colorLent)"
-            name="Lent"
-          />
-        </AreaChart>
+          <Bar dataKey="value" name="Amount">
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.fill} />
+            ))}
+          </Bar>
+        </RechartsBarChart>
       </ResponsiveContainer>
     </div>
   );
@@ -137,10 +128,11 @@ const LoanStatusChart = ({ data }) => {
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
   // Format data for the chart
-  const chartData = data.map((item) => ({
-    name: item._id,
-    value: item.count,
-  }));
+  const chartData =
+    data?.map((item) => ({
+      name: item._id,
+      value: item.count,
+    })) || [];
 
   return (
     <div className="h-64 w-full">
@@ -401,7 +393,7 @@ const Dashboard = () => {
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <motion.div
-              className="bg-white p-6 rounded-lg shadow-md"
+              className="bg-white p-4 rounded-lg shadow-md"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35 }}
@@ -409,7 +401,7 @@ const Dashboard = () => {
               <div className="flex items-center mb-4">
                 <BarChart className="w-5 h-5 text-gray-700 mr-2" />
                 <h3 className="text-lg font-semibold text-gray-800">
-                  Loan Activity (Last 6 Months)
+                  Loan Activity
                 </h3>
               </div>
               <LoanActivityChart data={loanActivity} />

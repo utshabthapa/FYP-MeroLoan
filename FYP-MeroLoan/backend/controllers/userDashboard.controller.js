@@ -1,4 +1,3 @@
-import { Loan } from "../models/loan.model.js";
 import { ActiveContract } from "../models/activeContract.model.js";
 import { Transaction } from "../models/transaction.model.js";
 
@@ -6,18 +5,18 @@ export const getDashboardStats = async (req, res) => {
   try {
     const userId = req.query.userId;
 
-    // Fetch basic loan statistics
-    const userLoans = await Loan.find({ userId });
-    const lentLoans = await ActiveContract.find({ lender: userId });
+    // Fetch all contracts where user is either lender or borrower
+    const contractsAsBorrower = await ActiveContract.find({ borrower: userId });
+    const contractsAsLender = await ActiveContract.find({ lender: userId });
 
-    // Calculate monthly growth rates
+    // Calculate monthly growth rates (same as before)
     const lastMonthStart = new Date();
     lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
     lastMonthStart.setDate(1);
     lastMonthStart.setHours(0, 0, 0, 0);
 
     const lastMonthEnd = new Date();
-    lastMonthEnd.setDate(0); // Last day of previous month
+    lastMonthEnd.setDate(0);
     lastMonthEnd.setHours(23, 59, 59, 999);
 
     const twoMonthsAgoStart = new Date(lastMonthStart);
@@ -26,82 +25,139 @@ export const getDashboardStats = async (req, res) => {
     const twoMonthsAgoEnd = new Date(lastMonthEnd);
     twoMonthsAgoEnd.setMonth(twoMonthsAgoEnd.getMonth() - 1);
 
-    // Get loans from last month
-    const lastMonthLoans = await Loan.find({
-      userId,
+    // Get contracts for growth rate calculations (same as before)
+    const lastMonthBorrowedContracts = await ActiveContract.find({
+      borrower: userId,
       createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd },
     });
 
-    // Get loans from two months ago for comparison
-    const twoMonthsAgoLoans = await Loan.find({
-      userId,
+    const twoMonthsAgoBorrowedContracts = await ActiveContract.find({
+      borrower: userId,
       createdAt: { $gte: twoMonthsAgoStart, $lte: twoMonthsAgoEnd },
     });
 
-    // Get lent loans from last month
-    const lastMonthLentLoans = await ActiveContract.find({
+    const lastMonthLentContracts = await ActiveContract.find({
       lender: userId,
       createdAt: { $gte: lastMonthStart, $lte: lastMonthEnd },
     });
 
-    // Get lent loans from two months ago
-    const twoMonthsAgoLentLoans = await ActiveContract.find({
+    const twoMonthsAgoLentContracts = await ActiveContract.find({
       lender: userId,
       createdAt: { $gte: twoMonthsAgoStart, $lte: twoMonthsAgoEnd },
     });
 
-    // Calculate growth rates
+    // Calculate growth rates (same as before)
     const borrowedGrowthRate = calculateGrowthRate(
-      twoMonthsAgoLoans.reduce((sum, loan) => sum + loan.loanAmount, 0),
-      lastMonthLoans.reduce((sum, loan) => sum + loan.loanAmount, 0)
+      twoMonthsAgoBorrowedContracts.reduce(
+        (sum, contract) => sum + contract.amount,
+        0
+      ),
+      lastMonthBorrowedContracts.reduce(
+        (sum, contract) => sum + contract.amount,
+        0
+      )
     );
 
     const lentGrowthRate = calculateGrowthRate(
-      twoMonthsAgoLentLoans.reduce((sum, loan) => sum + loan.amount, 0),
-      lastMonthLentLoans.reduce((sum, loan) => sum + loan.amount, 0)
+      twoMonthsAgoLentContracts.reduce(
+        (sum, contract) => sum + contract.amount,
+        0
+      ),
+      lastMonthLentContracts.reduce((sum, contract) => sum + contract.amount, 0)
     );
 
-    // Calculate earnings growth rate
-    const lastMonthEarnings = lastMonthLentLoans.reduce(
-      (sum, loan) => sum + loan.interestEarned,
-      0
-    );
+    // Calculate interest earnings (only from completed contracts)
+    const interestEarnings = contractsAsLender
+      .filter((contract) => contract.status === "completed")
+      .reduce(
+        (sum, contract) =>
+          sum + (contract.totalRepaymentAmount - contract.amount),
+        0
+      );
 
-    const twoMonthsAgoEarnings = twoMonthsAgoLentLoans.reduce(
-      (sum, loan) => sum + loan.interestEarned,
-      0
-    );
+    // Calculate last month's interest earnings
+    const lastMonthInterestEarnings = lastMonthLentContracts
+      .filter((contract) => contract.status === "completed")
+      .reduce(
+        (sum, contract) =>
+          sum + (contract.totalRepaymentAmount - contract.amount),
+        0
+      );
+
+    // Calculate two months ago interest earnings
+    const twoMonthsAgoInterestEarnings = twoMonthsAgoLentContracts
+      .filter((contract) => contract.status === "completed")
+      .reduce(
+        (sum, contract) =>
+          sum + (contract.totalRepaymentAmount - contract.amount),
+        0
+      );
 
     const earningsGrowthRate = calculateGrowthRate(
-      twoMonthsAgoEarnings,
-      lastMonthEarnings
+      twoMonthsAgoInterestEarnings,
+      lastMonthInterestEarnings
     );
+
+    // Calculate loan due (pending repayments where user is borrower)
+    const loanDue = contractsAsBorrower.reduce((sum, contract) => {
+      const pendingRepayments = contract.repaymentSchedule.filter(
+        (repayment) => repayment.status === "pending"
+      );
+      return (
+        sum +
+        pendingRepayments.reduce((repSum, rep) => repSum + rep.amountDue, 0)
+      );
+    }, 0);
+
+    // Calculate active loans (contracts where user is borrower and status is not completed)
+    const activeLoans = contractsAsBorrower.filter(
+      (contract) => contract.status !== "completed"
+    ).length;
 
     // Calculate dashboard statistics
     const stats = {
-      loanBorrowed: userLoans.reduce((sum, loan) => sum + loan.loanAmount, 0),
-      loanLended: lentLoans.reduce((sum, loan) => sum + loan.amount, 0),
-      interestEarnings: lentLoans.reduce(
-        (sum, loan) => sum + loan.interestEarned,
+      loanBorrowed: contractsAsBorrower.reduce(
+        (sum, contract) => sum + contract.amount,
         0
       ),
-      loanDue: userLoans
-        .filter((loan) => loan.status === "active")
-        .reduce((sum, loan) => sum + loan.remainingAmount, 0),
-      activeLoans: userLoans.filter((loan) => loan.status === "active").length,
+      loanLended: contractsAsLender.reduce(
+        (sum, contract) => sum + contract.amount,
+        0
+      ),
+      interestEarnings,
+      loanDue,
+      activeLoans,
       monthlyGrowth: {
         borrowed: Number.parseFloat(borrowedGrowthRate.toFixed(1)),
         lended: Number.parseFloat(lentGrowthRate.toFixed(1)),
         earnings: Number.parseFloat(earningsGrowthRate.toFixed(1)),
       },
-      newLoansThisMonth: lastMonthLoans.length,
+      newLoansThisMonth: lastMonthBorrowedContracts.length,
     };
 
-    // Get loan activity data for charts (last 6 months)
-    const loanActivity = await getLoanActivityData(userId);
+    // Simplified loan activity data (total borrowed and lended)
+    const loanActivity = [
+      {
+        borrowed: stats.loanBorrowed,
+        lent: stats.loanLended,
+      },
+    ];
 
-    // Get loan status distribution
-    const statusDistribution = await getLoanStatusDistribution(userId);
+    // Get loan status distribution (active vs non-active)
+    const statusDistribution = [
+      {
+        _id: "active",
+        count: contractsAsBorrower.filter(
+          (contract) => contract.status !== "completed"
+        ).length,
+      },
+      {
+        _id: "completed",
+        count: contractsAsBorrower.filter(
+          (contract) => contract.status === "completed"
+        ).length,
+      },
+    ];
 
     // Get monthly comparison data (this year vs last year)
     const monthlyComparison = await getMonthlyComparisonData(userId);
@@ -131,135 +187,16 @@ const calculateGrowthRate = (previousValue, currentValue) => {
   return ((currentValue - previousValue) / previousValue) * 100;
 };
 
-// Helper function to get loan activity data (last 6 months)
-const getLoanActivityData = async (userId) => {
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-  sixMonthsAgo.setDate(1);
-  sixMonthsAgo.setHours(0, 0, 0, 0);
-
-  // Get borrowed loans activity
-  const borrowedActivity = await Loan.aggregate([
-    {
-      $match: {
-        userId,
-        createdAt: { $gte: sixMonthsAgo },
-      },
-    },
-    {
-      $group: {
-        _id: {
-          year: { $year: "$createdAt" },
-          month: { $month: "$createdAt" },
-        },
-        borrowed: { $sum: "$loanAmount" },
-        count: { $sum: 1 },
-      },
-    },
-    {
-      $sort: {
-        "_id.year": 1,
-        "_id.month": 1,
-      },
-    },
-  ]);
-
-  // Get lent loans activity
-  const lentActivity = await ActiveContract.aggregate([
-    {
-      $match: {
-        lender: userId,
-        createdAt: { $gte: sixMonthsAgo },
-      },
-    },
-    {
-      $group: {
-        _id: {
-          year: { $year: "$createdAt" },
-          month: { $month: "$createdAt" },
-        },
-        lent: { $sum: "$amount" },
-        count: { $sum: 1 },
-      },
-    },
-    {
-      $sort: {
-        "_id.year": 1,
-        "_id.month": 1,
-      },
-    },
-  ]);
-
-  // Merge borrowed and lent data
-  const mergedActivity = [];
-  const monthsMap = new Map();
-
-  // Process borrowed activity
-  borrowedActivity.forEach((item) => {
-    const key = `${item._id.year}-${item._id.month}`;
-    monthsMap.set(key, {
-      _id: item._id,
-      borrowed: item.borrowed,
-      lent: 0,
-    });
-  });
-
-  // Process lent activity
-  lentActivity.forEach((item) => {
-    const key = `${item._id.year}-${item._id.month}`;
-    if (monthsMap.has(key)) {
-      const existing = monthsMap.get(key);
-      existing.lent = item.lent;
-    } else {
-      monthsMap.set(key, {
-        _id: item._id,
-        borrowed: 0,
-        lent: item.lent,
-      });
-    }
-  });
-
-  // Convert map to array
-  monthsMap.forEach((value) => {
-    mergedActivity.push(value);
-  });
-
-  // Sort by year and month
-  mergedActivity.sort((a, b) => {
-    if (a._id.year !== b._id.year) {
-      return a._id.year - b._id.year;
-    }
-    return a._id.month - b._id.month;
-  });
-
-  return mergedActivity;
-};
-
-// Helper function to get loan status distribution
-const getLoanStatusDistribution = async (userId) => {
-  return await Loan.aggregate([
-    {
-      $match: { userId },
-    },
-    {
-      $group: {
-        _id: "$status",
-        count: { $sum: 1 },
-      },
-    },
-  ]);
-};
-
 // Helper function to get monthly comparison data (this year vs last year)
 const getMonthlyComparisonData = async (userId) => {
   const currentYear = new Date().getFullYear();
   const lastYear = currentYear - 1;
 
-  // Get current year data
-  const currentYearData = await Loan.aggregate([
+  // Get current year data (as borrower)
+  const currentYearData = await ActiveContract.aggregate([
     {
       $match: {
-        userId,
+        borrower: userId,
         createdAt: {
           $gte: new Date(`${currentYear}-01-01`),
           $lte: new Date(`${currentYear}-12-31`),
@@ -269,7 +206,7 @@ const getMonthlyComparisonData = async (userId) => {
     {
       $group: {
         _id: { month: { $month: "$createdAt" } },
-        totalAmount: { $sum: "$loanAmount" },
+        totalAmount: { $sum: "$amount" },
       },
     },
     {
@@ -277,11 +214,11 @@ const getMonthlyComparisonData = async (userId) => {
     },
   ]);
 
-  // Get last year data
-  const lastYearData = await Loan.aggregate([
+  // Get last year data (as borrower)
+  const lastYearData = await ActiveContract.aggregate([
     {
       $match: {
-        userId,
+        borrower: userId,
         createdAt: {
           $gte: new Date(`${lastYear}-01-01`),
           $lte: new Date(`${lastYear}-12-31`),
@@ -291,7 +228,7 @@ const getMonthlyComparisonData = async (userId) => {
     {
       $group: {
         _id: { month: { $month: "$createdAt" } },
-        totalAmount: { $sum: "$loanAmount" },
+        totalAmount: { $sum: "$amount" },
       },
     },
     {
