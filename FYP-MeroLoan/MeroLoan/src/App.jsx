@@ -107,23 +107,30 @@ function App() {
     checkAuth();
   }, [checkAuth]);
 
-  // New repayment reminder check
+  // In your app.jsx
   useEffect(() => {
-    // Only check reminders for authenticated users who are borrowers
     if (isAuthenticated && user && user.isVerified && user.role === "user") {
-      const userId = user._id; // Get the user ID
+      const userId = user._id;
 
-      // Check immediately once after login with the user ID
-      const checkUserReminders = () => {
+      // Only check if we haven't checked recently (using localStorage)
+      const lastCheck = localStorage.getItem(`lastReminderCheck-${userId}`);
+      const now = new Date().getTime();
+
+      if (!lastCheck || now - parseInt(lastCheck) > 12 * 60 * 60 * 1000) {
+        const checkUserReminders = () => {
+          checkReminders(userId);
+          localStorage.setItem(`lastReminderCheck-${userId}`, now.toString());
+        };
+
+        checkUserReminders();
+      }
+
+      const intervalId = setInterval(() => {
+        const now = new Date().getTime();
+        localStorage.setItem(`lastReminderCheck-${userId}`, now.toString());
         checkReminders(userId);
-      };
+      }, 12 * 60 * 60 * 1000);
 
-      checkUserReminders();
-
-      // Set up a regular interval check (every 12 hours)
-      const intervalId = setInterval(checkUserReminders, 12 * 60 * 60 * 1000);
-
-      // Clean up interval on component unmount
       return () => clearInterval(intervalId);
     }
   }, [isAuthenticated, user, checkReminders]);
