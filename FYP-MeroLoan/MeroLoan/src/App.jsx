@@ -37,6 +37,7 @@ import ActiveContracts from "./pages/ActiveContracts";
 import ContractDetailView from "./pages/ContractDetailView";
 import { SocketContext } from "./socketContext"; // Import the context
 import { io } from "socket.io-client";
+import BanAlert from "./pages/BanAlert";
 
 const socket = io("http://localhost:5000");
 
@@ -59,7 +60,26 @@ const ProtectedRoute = ({ children }) => {
   if (isAuthenticated && user.isVerified && user.role === "admin") {
     return <Navigate to="/adminDashboard" replace />;
   }
+  // List of allowed routes for banned users
+  const allowedRoutesForBannedUsers = [
+    "/dashboard",
+    "/userProfile",
+    "/transactionHistory",
+    "/account/appeal",
+    "/user-profile/",
+  ];
 
+  // Check if user is banned and trying to access a restricted route
+  if (user.banStatus === "banned") {
+    const currentPath = window.location.pathname;
+    const isAllowed = allowedRoutesForBannedUsers.some(
+      (route) => currentPath === route || currentPath.startsWith(route)
+    );
+
+    if (!isAllowed) {
+      return <BanAlert />;
+    }
+  }
   return children;
 };
 
@@ -109,7 +129,13 @@ function App() {
 
   // In your app.jsx
   useEffect(() => {
-    if (isAuthenticated && user && user.isVerified && user.role === "user") {
+    if (
+      isAuthenticated &&
+      user &&
+      user.isVerified &&
+      user.role === "user" &&
+      user.banStatus !== "banned"
+    ) {
       const userId = user._id;
 
       // Only check if we haven't checked recently (using localStorage)

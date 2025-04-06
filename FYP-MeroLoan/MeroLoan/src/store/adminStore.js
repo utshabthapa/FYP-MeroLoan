@@ -30,6 +30,7 @@ export const useAdminStore = create((set) => ({
         withCredentials: true,
       });
 
+      // Store the data property from the response
       set({
         adminStats: response.data.data,
         isLoading: false,

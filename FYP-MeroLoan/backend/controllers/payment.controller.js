@@ -156,13 +156,10 @@ export const paymentSuccess = async (req, res) => {
     await lenderNotification.save();
 
     // Emit real-time notification to the lender
-    io.to(loan.pendingRepaymentDetails.lenderId.toString()).emit(
-      "newNotification",
-      {
-        message: lenderNotification.message,
-        timestamp: lenderNotification.timestamp,
-      }
-    );
+    io.to(loan.pendingRepaymentDetails.lenderId).emit("newNotification", {
+      message: lenderNotification.message,
+      timestamp: lenderNotification.timestamp,
+    });
 
     // Notification for Borrower
     const borrowerNotification = new Notification({
@@ -173,13 +170,10 @@ export const paymentSuccess = async (req, res) => {
     await borrowerNotification.save();
 
     // Emit real-time notification to the borrower
-    io.to(loan.pendingRepaymentDetails.borrowerId.toString()).emit(
-      "newNotification",
-      {
-        message: borrowerNotification.message,
-        timestamp: borrowerNotification.timestamp,
-      }
-    );
+    io.to(loan.pendingRepaymentDetails.borrowerId).emit("newNotification", {
+      message: borrowerNotification.message,
+      timestamp: borrowerNotification.timestamp,
+    });
 
     // Update user to add transaction ID
     const user = await User.findById(loan.pendingRepaymentDetails.borrowerId);
@@ -405,8 +399,13 @@ export const repaymentSuccess = async (req, res) => {
       (milestone) => milestone.status === "paid"
     );
 
+    // Fetch lender and borrower details
     // Inside the repaymentSuccess function, after checking if all milestones are paid
     if (allPaid) {
+      const lender = await User.findById(loan.pendingRepaymentDetails.lenderId);
+      const borrower = await User.findById(
+        loan.pendingRepaymentDetails.borrowerId
+      );
       activeContract.status = "completed";
       loan.status = "completed";
 
@@ -449,8 +448,6 @@ export const repaymentSuccess = async (req, res) => {
 
     // Save the updated active contract
     await activeContract.save();
-
-    // Fetch lender and borrower details
     const lender = await User.findById(loan.pendingRepaymentDetails.lenderId);
     const borrower = await User.findById(
       loan.pendingRepaymentDetails.borrowerId
