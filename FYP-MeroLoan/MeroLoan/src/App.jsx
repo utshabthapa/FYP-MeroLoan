@@ -38,6 +38,8 @@ import ContractDetailView from "./pages/ContractDetailView";
 import { SocketContext } from "./socketContext"; // Import the context
 import { io } from "socket.io-client";
 import BanAlert from "./pages/BanAlert";
+import Policy from "./pages/Policy";
+import AboutPage from "./pages/AboutUs";
 
 const socket = io("http://localhost:5000");
 
@@ -234,6 +236,14 @@ function App() {
               }
             />
             <Route
+              path="/about"
+              element={
+                <RedirectAuthenticatedUser>
+                  <AboutPage />
+                </RedirectAuthenticatedUser>
+              }
+            />
+            <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
@@ -403,6 +413,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/policy" element={<Policy />} />
             {/* <Route
             path="/contract-detail-view"
             element={

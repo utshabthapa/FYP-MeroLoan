@@ -119,17 +119,17 @@ export const paymentSuccess = async (req, res) => {
 
     // Determine credit score increase based on lending amount
     if (lendingAmount >= 500 && lendingAmount < 1000) {
-      creditScoreIncrease = 2;
+      creditScoreIncrease = 1;
     } else if (lendingAmount >= 1000 && lendingAmount < 5000) {
-      creditScoreIncrease = 5;
+      creditScoreIncrease = 2;
     } else if (lendingAmount >= 5000 && lendingAmount < 10000) {
-      creditScoreIncrease = 8;
+      creditScoreIncrease = 3;
     } else if (lendingAmount >= 10000 && lendingAmount < 50000) {
-      creditScoreIncrease = 12;
+      creditScoreIncrease = 5;
     } else if (lendingAmount >= 50000 && lendingAmount < 100000) {
-      creditScoreIncrease = 18;
+      creditScoreIncrease = 8;
     } else if (lendingAmount >= 100000 && lendingAmount <= 500000) {
-      creditScoreIncrease = 30;
+      creditScoreIncrease = 15;
     } else if (lendingAmount < 500) {
       creditScoreIncrease = 0; // No increase for amounts less than 500
     }
@@ -458,32 +458,30 @@ export const repaymentSuccess = async (req, res) => {
     let creditScoreChange = 0;
 
     if (isOnTime) {
-      // Determine credit score increase based on repayment amount for on-time payments
       if (repaymentAmount >= 500 && repaymentAmount < 1000) {
-        creditScoreChange = 2;
+        creditScoreChange = 1; // Small boost
       } else if (repaymentAmount >= 1000 && repaymentAmount < 5000) {
-        creditScoreChange = 5;
+        creditScoreChange = 2;
       } else if (repaymentAmount >= 5000 && repaymentAmount < 10000) {
-        creditScoreChange = 8;
+        creditScoreChange = 3;
       } else if (repaymentAmount >= 10000 && repaymentAmount < 50000) {
-        creditScoreChange = 12;
+        creditScoreChange = 5;
       } else if (repaymentAmount >= 50000 && repaymentAmount < 100000) {
-        creditScoreChange = 18;
+        creditScoreChange = 8;
       } else if (repaymentAmount >= 100000 && repaymentAmount <= 500000) {
-        creditScoreChange = 30;
+        creditScoreChange = 12; // Max increase for big repayments
       } else if (repaymentAmount < 500) {
-        creditScoreChange = 0; // No increase for amounts less than 500
+        creditScoreChange = 0; // No change for tiny repayments
       }
     } else {
-      // Determine credit score decrease based on days late
       if (daysLate <= 7) {
-        creditScoreChange = -5; // 1-7 days late: -5 points
+        creditScoreChange = -10; // Minor delay: -10
       } else if (daysLate <= 14) {
-        creditScoreChange = -10; // 8-14 days late: -10 points
+        creditScoreChange = -20; // Moderate delay: -20
       } else if (daysLate <= 30) {
-        creditScoreChange = -15; // 15-30 days late: -15 points
+        creditScoreChange = -30; // Serious delay: -30
       } else {
-        creditScoreChange = -25; // More than 30 days late: -25 points
+        creditScoreChange = -50; // Very late: Harsh penalty (-50)
       }
     }
 

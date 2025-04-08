@@ -1,6 +1,7 @@
-import React from "react";
+"use client";
+
+import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
-import heroImage from "../assets/landingPageMain.png";
 import {
   Shield,
   Users,
@@ -12,6 +13,10 @@ import {
   UserPlus,
   Lock,
 } from "lucide-react";
+import { useLandingStore } from "@/store/landingStore";
+import { Link } from "react-router";
+
+import heroImage from "../assets/landingPageMain.png";
 
 const FeatureCard = ({ icon: Icon, title, description }) => (
   <div className="w-full h-56 m-4 border border-gray-800 rounded-lg bg-white p-6 hover:shadow-xl transition-shadow">
@@ -21,19 +26,62 @@ const FeatureCard = ({ icon: Icon, title, description }) => (
   </div>
 );
 
-const StatCard = ({ title, value }) => (
-  <div className="w-72 h-56 bg-white rounded-lg shadow-md p hover:shadow-xl transition-shadow flex flex-col items-center justify-center text-center border border-gray-200">
-    <h3 className="text-4xl font-bold text-gray-900 mb-4">{value}</h3>
-    <p className="text-gray-700 font-semibold">{title}</p>
+const StatCard = ({ title, value, isLoading }) => (
+  <div className="w-72 h-56 bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow flex flex-col items-center justify-center text-center border border-gray-200">
+    {isLoading ? (
+      <div className="animate-pulse">
+        <div className="h-10 w-32 bg-gray-200 rounded mb-4"></div>
+        <div className="h-6 w-24 bg-gray-200 rounded"></div>
+      </div>
+    ) : (
+      <>
+        <h3 className="text-4xl font-bold text-gray-900 mb-4">{value}</h3>
+        <p className="text-gray-700 font-semibold">{title}</p>
+      </>
+    )}
   </div>
 );
 
 const LandingPage = () => {
+  const { landingStats, isLoading, error, fetchLandingStats } =
+    useLandingStore();
+
+  useEffect(() => {
+    fetchLandingStats();
+  }, [fetchLandingStats]);
+
+  const formatValue = (value, prefix = "", suffix = "") => {
+    if (!value && value !== 0) return `${prefix}0${suffix}`;
+
+    // Format large numbers with K, M, B suffixes
+    if (value >= 1000000000) {
+      return `${prefix}${(value / 1000000000).toFixed(1)}B${suffix}`;
+    } else if (value >= 1000000) {
+      return `${prefix}${(value / 1000000).toFixed(1)}M${suffix}`;
+    } else if (value >= 1000) {
+      return `${prefix}${(value / 1000).toFixed(1)}K${suffix}`;
+    }
+
+    return `${prefix}${value}${suffix}`;
+  };
+
   const stats = [
-    { title: "Active Users", value: "50,000+" },
-    { title: "Total Loans Funded", value: "$25M+" },
-    { title: "Average ROI", value: "12.5%" },
-    { title: "Success Rate", value: "98%" },
+    {
+      title: "Active Users",
+      value: formatValue(landingStats?.totalUsers),
+    },
+    {
+      title: "Total Loans Funded",
+      value: formatValue(landingStats?.totalLoans),
+    },
+    {
+      title: "Total Money Flow",
+      value: formatValue(landingStats?.totalMoneyFlow, "₹"),
+    },
+    {
+      title: "Total Transactions",
+      value: formatValue(landingStats?.totalTransactions),
+    },
   ];
 
   const keyFeatures = [
@@ -102,9 +150,9 @@ const LandingPage = () => {
         <Navbar />
 
         {/* Hero Section */}
-        <div className="flex items-center justify-between h-dvh max-w-7xl mx-auto px-">
-          <div className="w-1/2 flex flex-col justify-center">
-            <h1 className="text-6xl font-extrabold text-gray-900">
+        <div className="flex flex-col md:flex-row items-center justify-between min-h-screen max-w-7xl mx-auto px-6 py-12">
+          <div className="w-full md:w-1/2 flex flex-col justify-center mb-10 md:mb-0">
+            <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900">
               Peer-to-Peer Lending Made Simple and Secure
             </h1>
             <p className="mt-8 text-xl text-gray-600 leading-relaxed">
@@ -112,22 +160,22 @@ const LandingPage = () => {
               Whether you're looking to invest or borrow, we've got you covered
               with transparent rates and secure transactions.
             </p>
-            <div className="flex items-center mt-14 space-x-4 ">
-              <a
+            <div className="flex items-center mt-14 space-x-4">
+              <Link
                 href="/register"
                 className="text-white font-normal px-8 py-2 border-2 border-gray-900 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
               >
                 Get Started Now
-              </a>
-              <a
-                href="/login"
+              </Link>
+              <Link
+                href="/about"
                 className="text-gray-900 font-semibold px-8 py-2 border-2 border-gray-900 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Learn More
-              </a>
+              </Link>
             </div>
           </div>
-          <div className="w-1/2 pl-14 ">
+          <div className="w-full md:w-1/2 md:pl-14">
             <img
               src={heroImage}
               alt="P2P Lending Platform"
@@ -138,27 +186,35 @@ const LandingPage = () => {
 
         {/* Stats Section */}
         <div className="w-full bg-gray-50 py-20">
-          <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-7xl px-6">
             <h2 className="text-4xl font-extrabold text-center mb-14 text-gray-900">
               Trusted by Thousands of Users
             </h2>
-            <div className="flex justify-between space-x-">
-              {stats.map((stat, index) => (
-                <StatCard key={index} {...stat} />
-              ))}
-            </div>
+            {error ? (
+              <div className="text-center text-red-500 mb-8">
+                Error loading stats: {error}
+              </div>
+            ) : (
+              <div className="flex flex-wrap justify-center gap-6">
+                {stats.map((stat, index) => (
+                  <StatCard key={index} {...stat} isLoading={isLoading} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Key Features Section */}
         <div className="w-full bg-white py-20">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto px-6">
             <h2 className="text-4xl font-extrabold text-center mb-14 text-gray-900">
               Why Choose Our Platform?
             </h2>
-            <div className="flex justify-between">
+            <div className="flex flex-wrap justify-center">
               {keyFeatures.map((feature, index) => (
-                <FeatureCard key={index} {...feature} />
+                <div key={index} className="w-full md:w-1/3 px-4">
+                  <FeatureCard {...feature} />
+                </div>
               ))}
             </div>
           </div>
@@ -166,13 +222,13 @@ const LandingPage = () => {
 
         {/* Benefits Section */}
         <div className="w-full bg-gray-50 py-20">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto px-6">
             <h2 className="text-4xl font-extrabold text-center mb-14 text-gray-900">
               Platform Benefits
             </h2>
-            <div className="flex flex-wrap   max-w-7xl mx-auto">
+            <div className="flex flex-wrap justify-center">
               {benefits.map((benefit, index) => (
-                <div key={index} className="w-1/3 flex justify-center">
+                <div key={index} className="w-full md:w-1/3 px-4">
                   <FeatureCard {...benefit} />
                 </div>
               ))}
@@ -182,26 +238,26 @@ const LandingPage = () => {
 
         {/* CTA Section */}
         <div className="w-full bg-gray-900 py-20">
-          <div className="max-w-screen-2xl mx-auto text-center">
+          <div className="max-w-7xl mx-auto text-center px-6">
             <h2 className="text-4xl font-extrabold text-white mb-6">
               Ready to Start Your P2P Lending Journey?
             </h2>
             <p className="text-xl text-gray-300 mb-10">
               Join our community of lenders and borrowers today
             </p>
-            <div className="flex justify-center items-center space-x-6">
-              <a
+            <div className="flex flex-wrap justify-center items-center gap-6">
+              <Link
                 href="/signup"
                 className="bg-white text-gray-900 hover:bg-gray-100 py-3 px-8 rounded-lg font-semibold transition-colors"
               >
                 Create Account
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/contact"
                 className="text-white border-2 border-white hover:bg-gray-800 px-8 py-3 rounded-lg font-semibold transition-colors"
               >
                 Contact Us
-              </a>
+              </Link>
             </div>
           </div>
         </div>

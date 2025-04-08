@@ -407,6 +407,16 @@ const Navbar = () => {
                   </li>
                   <li>
                     <Link
+                      to="/policy"
+                      className={`${defaultLinkClasses} ${
+                        isActive("/policy") ? activeLinkClasses : ""
+                      }`}
+                    >
+                      <span>Privacy Policy</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
                       to="/signup"
                       className={`${defaultLinkClasses} ${
                         isActive("/signup") ? activeLinkClasses : ""
@@ -469,6 +479,16 @@ const Navbar = () => {
                       <span>Active Contracts</span>
                     </Link>
                   </li>
+                  <li>
+                    <Link
+                      to="/policy"
+                      className={`${defaultLinkClasses} ${
+                        isActive("/policy") ? activeLinkClasses : ""
+                      }`}
+                    >
+                      <span>Privacy Policy</span>
+                    </Link>
+                  </li>
                   <li className="relative" ref={notificationRef}>
                     <button
                       onClick={toggleNotifications}
@@ -523,6 +543,7 @@ const Navbar = () => {
                       <User size={20} className="text-gray-700" />
                     </Link>
                   </li>
+
                   <li>
                     <Link
                       className={`${
