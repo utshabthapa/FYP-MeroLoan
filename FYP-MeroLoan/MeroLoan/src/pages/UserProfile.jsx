@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuthStore } from "../store/authStore";
 import { useActiveContractStore } from "../store/activeContractStore";
 import { useUserDashboardStore } from "../store/userDashboardStore";
-
+import FinesModal from "@/components/Fine";
 import {
   Camera,
   CheckCircle,
@@ -380,7 +380,7 @@ const UserProfile = () => {
   const [editedUser, setEditedUser] = useState({});
   const [activeTab, setActiveTab] = useState("active");
   const fileInputRef = useRef(null);
-
+  const [showFinesModal, setShowFinesModal] = useState(false);
   const navigate = useNavigate();
   const { user, updateProfilePicture, logout, updateUserProfile } =
     useAuthStore();
@@ -643,18 +643,29 @@ const UserProfile = () => {
                 Account Actions
               </h3>
 
-              <div className="space-y-3">
+              <div className="space-y-">
+                <button
+                  onClick={() => setShowFinesModal(true)}
+                  className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors flex items-center mb-3"
+                >
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  View My Fines
+                </button>
+
+                <FinesModal
+                  show={showFinesModal}
+                  onHide={() => setShowFinesModal(false)}
+                />
                 <button
                   onClick={() => navigate("/transactionHistory")}
-                  className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors flex items-center"
+                  className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors flex items-center mb-3"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
                   Transaction History
                 </button>
-
                 <button
                   onClick={handleLogout}
-                  className="w-full py-2 px-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors flex items-center"
+                  className="w-full py-2 px-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors flex items-center mb-3"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout

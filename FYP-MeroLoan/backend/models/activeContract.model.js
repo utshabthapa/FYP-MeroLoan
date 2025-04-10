@@ -32,7 +32,7 @@ const activeContractSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["active", "completed", "defaulted"],
+      enum: ["active", "completed", "defaulted", "overdue"],
       default: "active",
     },
     repaymentSchedule: [

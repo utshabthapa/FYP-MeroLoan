@@ -17,6 +17,7 @@ import userProfileRoutes from "./routes/userProfile.route.js";
 import appealRoutes from "./routes/appeal.route.js";
 import reminderRoutes from "./routes/reminder.route.js"; // Import your new route
 import landingRoutes from "./routes/landing.route.js"; // Import your new route
+import finesRoutes from "./routes/fine.route.js"; // Import your new route
 // Now add code to your index.js or server.js file to start the reminder scheduler
 import { startRepaymentReminderScheduler } from "./utils/repaymentReminder.js";
 
@@ -82,6 +83,7 @@ app.use("/api/users", userProfileRoutes);
 app.use("/api/appeals", appealRoutes);
 app.use("/api/reminders", reminderRoutes);
 app.use("/api/landing", landingRoutes);
+app.use("/api/fines", finesRoutes);
 
 // Start the server
 server.listen(PORT, () => {

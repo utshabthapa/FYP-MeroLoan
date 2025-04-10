@@ -2,7 +2,7 @@ import { ActiveContract } from "../models/activeContract.model.js";
 import { Loan } from "../models/loan.model.js";
 import { User } from "../models/user.model.js";
 import { Notification } from "../models/notification.model.js"; // Import Notification model
-import { io } from "../index.js"; // Import socket.io instance
+import { io } from "../index.js"; // Import the `io` instance for real-time notifications
 
 // Create Active Contract
 export const createActiveContract = async (req, res) => {

@@ -40,6 +40,8 @@ import { io } from "socket.io-client";
 import BanAlert from "./pages/BanAlert";
 import Policy from "./pages/Policy";
 import AboutPage from "./pages/AboutUs";
+import FineSuccess from "./pages/FineSuccess";
+import NotFound from "./pages/NotFound";
 
 const socket = io("http://localhost:5000");
 
@@ -390,6 +392,14 @@ function App() {
               }
             />
             <Route
+              path="/fine-payment-success"
+              element={
+                <ProtectedRoute>
+                  <FineSuccess />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/payment-failure"
               element={
                 <ProtectedRoute>
@@ -422,6 +432,8 @@ function App() {
               </ProtectedRoute>
             }
           /> */}
+            {/* 404 Not Found Route - This should be the last route */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </>
       </BrowserRouter>

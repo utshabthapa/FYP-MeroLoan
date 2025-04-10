@@ -5,6 +5,7 @@ import {
   VERIFICATION_EMAIL_TEMPLATE,
   KYC_APPROVED_TEMPLATE,
   KYC_REJECTED_TEMPLATE,
+  REPAYMENT_REMINDER_TEMPLATE,
 } from "./emailTemplate.js";
 import dotenv from "dotenv";
 dotenv.config();

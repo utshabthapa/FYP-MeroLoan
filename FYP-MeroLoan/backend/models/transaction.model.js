@@ -23,7 +23,7 @@ const transactionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["LENDING", "REPAYMENT"], // Two possible values
+      enum: ["LENDING", "REPAYMENT", "FINE"], // Two possible values
     },
     adminTransfer: { type: Boolean, default: false }, // New field added
   },

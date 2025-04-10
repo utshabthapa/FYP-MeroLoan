@@ -8,6 +8,7 @@ import CryptoJS from "crypto-js";
 import { User } from "../models/user.model.js";
 import { Notification } from "../models/notification.model.js"; // Import the Notification model
 import { io } from "../index.js"; // Import the `io` instance for real-time notifications
+import { Fine } from "../models/fine.model.js";
 
 const generateSignature = (data, secret) => {
   const hashString = `total_amount=${data.total_amount},transaction_uuid=${data.transaction_uuid},product_code=${data.product_code}`;
@@ -324,11 +325,13 @@ export const repaymentSuccess = async (req, res) => {
       type: "REPAYMENT",
     });
 
-    // Check if payment is on time or late
     let isOnTime = true;
     let daysLate = 0;
     let milestoneIndex = -1;
+    let fineAmount = 0;
+    let finePercent = 0;
 
+    // Check if payment is late and calculate fine
     if (loan.pendingRepaymentDetails.isMilestonePayment) {
       milestoneIndex = loan.pendingRepaymentDetails.milestoneNumber - 1;
 
@@ -340,13 +343,40 @@ export const repaymentSuccess = async (req, res) => {
         const dueDate = new Date(milestone.dueDate);
         const currentDate = new Date();
 
-        // Check if payment is made after the due date
         isOnTime = currentDate <= dueDate;
 
-        // Calculate days late if payment is late
         if (!isOnTime) {
           const timeDiff = currentDate.getTime() - dueDate.getTime();
           daysLate = Math.floor(timeDiff / (1000 * 3600 * 24));
+
+          // Calculate fine based on days late
+          if (daysLate <= 7) {
+            finePercent = 5; // Minor delay: 5%
+          } else if (daysLate <= 14) {
+            finePercent = 10; // Moderate delay: 10%
+          } else if (daysLate <= 30) {
+            finePercent = 18; // Serious delay: 18%
+          } else {
+            finePercent = 25; // Very late: 25%
+          }
+
+          fineAmount =
+            (loan.pendingRepaymentDetails.amount * finePercent) / 100;
+
+          // Create fine record
+          const fine = new Fine({
+            loanId: loan._id,
+            borrowerId: loan.pendingRepaymentDetails.borrowerId,
+            originalAmount: loan.pendingRepaymentDetails.amount,
+            finePercent: finePercent,
+            fineAmount: fineAmount,
+            daysLate: daysLate,
+            status: "pending",
+          });
+          await fine.save();
+
+          // Add fine to the milestone record
+          milestone.fine = fine._id;
         }
       }
     }
@@ -511,36 +541,72 @@ export const repaymentSuccess = async (req, res) => {
       )} points due to late payment.`;
     }
 
-    // Notification for Borrower
-    const borrowerNotification = new Notification({
-      userId: loan.pendingRepaymentDetails.borrowerId,
-      message: `Your repayment transaction has been processed. You will be notified as soon as it gets verified.${creditScoreMessage}`,
-      timestamp: new Date(),
-    });
-    await borrowerNotification.save();
+    // Update the notification messages to include fine information if applicable
+    if (!isOnTime) {
+      // Notification for Borrower - updated to include fine
+      const borrowerNotification = new Notification({
+        userId: loan.pendingRepaymentDetails.borrowerId,
+        message: `Your repayment was processed but was ${daysLate} days late. A fine of ${finePercent}% ($${fineAmount.toFixed(
+          2
+        )}) has been applied.${creditScoreMessage}`,
+        timestamp: new Date(),
+      });
+      await borrowerNotification.save();
 
-    // Emit real-time notification to the borrower
-    io.to(loan.pendingRepaymentDetails.borrowerId).emit("newNotification", {
-      message: borrowerNotification.message,
-      timestamp: borrowerNotification.timestamp,
-    });
+      // Emit real-time notification
+      io.to(loan.pendingRepaymentDetails.borrowerId).emit("newNotification", {
+        message: borrowerNotification.message,
+        timestamp: borrowerNotification.timestamp,
+      });
 
-    // Notification for Lender
-    const lenderNotification = new Notification({
-      userId: loan.pendingRepaymentDetails.lenderId,
-      message: `You got repaid $${loan.pendingRepaymentDetails.amount} by ${
-        borrower.name
-      }${!isOnTime ? ` (${daysLate} days late)` : ""}.`,
-      timestamp: new Date(),
-    });
-    await lenderNotification.save();
+      // Notification for Lender - updated to include fine
+      const lenderNotification = new Notification({
+        userId: loan.pendingRepaymentDetails.lenderId,
+        message: `You got repaid $${loan.pendingRepaymentDetails.amount} by ${
+          borrower.name
+        } (${daysLate} days late). A fine of ${finePercent}% ($${fineAmount.toFixed(
+          2
+        )}) will be collected.`,
+        timestamp: new Date(),
+      });
+      await lenderNotification.save();
 
-    // Emit real-time notification to the lender
-    io.to(loan.pendingRepaymentDetails.lenderId).emit("newNotification", {
-      message: lenderNotification.message,
-      timestamp: lenderNotification.timestamp,
-    });
+      // Emit real-time notification
+      io.to(loan.pendingRepaymentDetails.lenderId).emit("newNotification", {
+        message: lenderNotification.message,
+        timestamp: lenderNotification.timestamp,
+      });
+    } else {
+      // Notification for Borrower
+      const borrowerNotification = new Notification({
+        userId: loan.pendingRepaymentDetails.borrowerId,
+        message: `Your repayment transaction has been processed. You will be notified as soon as it gets verified.${creditScoreMessage}`,
+        timestamp: new Date(),
+      });
+      await borrowerNotification.save();
 
+      // Emit real-time notification to the borrower
+      io.to(loan.pendingRepaymentDetails.borrowerId).emit("newNotification", {
+        message: borrowerNotification.message,
+        timestamp: borrowerNotification.timestamp,
+      });
+
+      // Notification for Lender
+      const lenderNotification = new Notification({
+        userId: loan.pendingRepaymentDetails.lenderId,
+        message: `You got repaid $${loan.pendingRepaymentDetails.amount} by ${
+          borrower.name
+        }${!isOnTime ? ` (${daysLate} days late)` : ""}.`,
+        timestamp: new Date(),
+      });
+      await lenderNotification.save();
+
+      // Emit real-time notification to the lender
+      io.to(loan.pendingRepaymentDetails.lenderId).emit("newNotification", {
+        message: lenderNotification.message,
+        timestamp: lenderNotification.timestamp,
+      });
+    }
     // Update user to add transaction ID
     const user = await User.findById(loan.pendingRepaymentDetails.borrowerId);
     if (user) {
@@ -554,7 +620,7 @@ export const repaymentSuccess = async (req, res) => {
     loan.pendingRepaymentDetails = undefined;
     await loan.save();
 
-    // Send a JSON response or redirect to frontend success page
+    // Update the response to include fine information
     res.json({
       message: "Repayment successful.",
       transactionId: transaction._id,
@@ -564,6 +630,9 @@ export const repaymentSuccess = async (req, res) => {
       creditScoreChange: creditScoreChange,
       isLate: !isOnTime,
       daysLate: isOnTime ? 0 : daysLate,
+      fineApplied: !isOnTime,
+      finePercent: !isOnTime ? finePercent : 0,
+      fineAmount: !isOnTime ? fineAmount : 0,
     });
   } catch (error) {
     console.error("Error in repaymentSuccess:", error);
