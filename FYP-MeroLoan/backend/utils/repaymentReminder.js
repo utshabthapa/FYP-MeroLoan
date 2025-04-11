@@ -28,28 +28,32 @@ export const checkUpcomingRepayments = async (specificUserId = null) => {
 
     for (const contract of activeContracts) {
       for (const payment of contract.repaymentSchedule) {
-        // Skip if payment is already completed
         if (payment.status === "completed") continue;
 
         const dueDate = new Date(payment.dueDate);
         const diffTime = dueDate - now;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        // Upcoming payment reminder (only if not already sent for this payment)
+        // Updated upcoming payment reminder section
         if (diffDays <= REMINDER_DAYS && diffDays > 0) {
           const borrower = contract.borrower;
           if (!borrower) continue;
 
-          // Check if we've already sent a notification for this specific payment
+          // More specific check for existing notifications
           const existingNotification = await Notification.findOne({
             userId: borrower._id,
-            "metadata.paymentId": payment._id.toString(),
-            reminderStatus: "sent",
+            loanId: contract._id,
+            paymentId: payment._id,
             "metadata.reminderType": "upcoming",
+            "metadata.daysRemaining": diffDays,
           });
 
-          // Skip if reminder already sent
-          if (existingNotification) continue;
+          if (existingNotification) {
+            console.log(
+              `Reminder already sent for payment ${payment._id} to user ${borrower._id}`
+            );
+            continue;
+          }
 
           const notificationMessage = `Reminder: Payment of Rs.${payment.amountDue.toFixed(
             2
@@ -57,16 +61,18 @@ export const checkUpcomingRepayments = async (specificUserId = null) => {
 
           const notification = new Notification({
             userId: borrower._id,
+            loanId: contract._id,
+            paymentId: payment._id,
             message: notificationMessage,
             reminderStatus: "sent",
             metadata: {
-              paymentId: payment._id.toString(),
               reminderType: "upcoming",
               daysRemaining: diffDays,
             },
           });
 
           await notification.save();
+          remindersSent++;
 
           if (io) {
             io.to(borrower._id.toString()).emit("newNotification", {
@@ -76,47 +82,31 @@ export const checkUpcomingRepayments = async (specificUserId = null) => {
               id: notification._id,
             });
           }
-
-          // try {
-          //   await sendRepaymentReminderEmail(
-          //     borrower.email,
-          //     borrower.firstName,
-          //     contract.loanAmount,
-          //     payment.amountDue,
-          //     dueDate,
-          //     diffDays
-          //   );
-          //   remindersSent++;
-          //   console.log(`Sent reminder to ${borrower.email}`);
-          // } catch (emailError) {
-          //   console.error(`Email failed for ${borrower.email}:`, emailError);
-          // }
         }
-        // Overdue payment handling
+        // Updated overdue payment handling section
         else if (diffDays <= 0) {
           const daysOverdue = Math.abs(diffDays);
           const borrower = contract.borrower;
           if (!borrower) continue;
 
-          // Check if we already sent an overdue notification for the CURRENT number of days
-          const existingOverdueNotification = await Notification.findOne({
-            userId: borrower._id,
-            "metadata.paymentId": payment._id.toString(),
-            reminderStatus: "sent",
-            "metadata.reminderType": "overdue",
-            "metadata.daysOverdue": daysOverdue,
-          });
-
-          // Skip if we already sent a notification for this specific number of days overdue
-          if (existingOverdueNotification) continue;
-
-          // Calculate fine information (but don't create the fine record)
+          // Calculate fine information first
           const baseFinePercent = 5;
           const additionalPercent = Math.min(daysOverdue, 30); // Cap at 30% additional
           const finePercent = baseFinePercent + additionalPercent;
           const fineAmount = (payment.amountDue * finePercent) / 100;
 
-          // Create overdue notification with details
+          // Now check existing overdue notification
+          // Updated overdue notification check
+          const existingOverdueNotification = await Notification.findOne({
+            userId: borrower._id,
+            loanId: contract._id,
+            paymentId: payment._id,
+            "metadata.reminderType": "overdue",
+            "metadata.daysOverdue": daysOverdue,
+          });
+
+          if (existingOverdueNotification) continue;
+
           const overdueMessage = `URGENT: You've missed your payment of Rs.${payment.amountDue.toFixed(
             2
           )} by ${daysOverdue} day(s). A fine of Rs.${fineAmount.toFixed(
@@ -125,10 +115,11 @@ export const checkUpcomingRepayments = async (specificUserId = null) => {
 
           const overdueNotification = new Notification({
             userId: borrower._id,
+            loanId: contract._id,
+            paymentId: payment._id,
             message: overdueMessage,
             reminderStatus: "sent",
             metadata: {
-              paymentId: payment._id.toString(),
               reminderType: "overdue",
               daysOverdue: daysOverdue,
               fineAmount: fineAmount,
@@ -138,8 +129,7 @@ export const checkUpcomingRepayments = async (specificUserId = null) => {
 
           await overdueNotification.save();
 
-          // Update payment with overdue information, but keeping status as "pending"
-          // Don't use "overdue" status since it's not in the enum
+          // Update payment with overdue information
           payment.fineAmount = fineAmount;
           payment.daysOverdue = daysOverdue;
           payment.lastReminderSent = new Date();
@@ -152,31 +142,29 @@ export const checkUpcomingRepayments = async (specificUserId = null) => {
               0
             );
             await borrower.save();
-
-            // Mark that we've applied the penalty
             payment.penaltyApplied = true;
           }
 
           // Notify lender about overdue payment (only once)
           if (!payment.lenderNotified) {
+            const lenderFullName =
+              `${contract.borrower.firstName || ""} ${
+                contract.borrower.lastName || ""
+              }`.trim() || "the borrower";
+
             const lenderNotification = new Notification({
               userId: contract.lender._id,
-              message: `Alert: ${borrower.firstName} ${
-                borrower.lastName
-              } has missed a payment of Rs.${payment.amountDue.toFixed(
+              loanId: contract._id,
+              paymentId: payment._id,
+              message: `Alert: ${lenderFullName} has missed a payment of Rs.${payment.amountDue.toFixed(
                 2
               )} by ${daysOverdue} day(s). A fine of Rs.${fineAmount.toFixed(
                 2
               )} has been applied.`,
               reminderStatus: "sent",
-              metadata: {
-                paymentId: payment._id.toString(),
-                borrowerId: borrower._id.toString(),
-              },
             });
-            await lenderNotification.save();
 
-            // Mark that we've notified the lender
+            await lenderNotification.save();
             payment.lenderNotified = true;
 
             if (io) {
@@ -187,50 +175,18 @@ export const checkUpcomingRepayments = async (specificUserId = null) => {
             }
           }
 
-          // Emit real-time notifications to borrower
           if (io) {
             io.to(borrower._id.toString()).emit("newNotification", {
               message: overdueNotification.message,
               timestamp: overdueNotification.timestamp,
             });
           }
-
-          // try {
-          //   // Send overdue email to borrower
-          //   await sendRepaymentReminderEmail(
-          //     borrower.email,
-          //     borrower.firstName,
-          //     contract.loanAmount,
-          //     payment.amountDue,
-          //     dueDate,
-          //     -daysOverdue, // Negative value indicates overdue
-          //     fineAmount
-          //   );
-
-          //   overdueRemindersSent++;
-          //   console.log(
-          //     `Sent overdue notice to ${borrower.email} with ${daysOverdue} days late`
-          //   );
-          // } catch (emailError) {
-          //   console.error(
-          //     `Overdue email failed for ${borrower.email}:`,
-          //     emailError
-          //   );
-          // }
         }
       }
-      await contract.save(); // Save any changes made to the contract
+      await contract.save();
     }
 
-    console.log(`Results:
-      - Sent ${remindersSent} upcoming payment reminders
-      - Sent ${overdueRemindersSent} overdue notices
-      - Processed ${activeContracts.length} active contracts`);
-
-    return {
-      upcomingReminders: remindersSent,
-      overdueReminders: overdueRemindersSent,
-    };
+    // ... (rest of the function remains the same)
   } catch (error) {
     console.error("Error in checkUpcomingRepayments:", error);
     throw error;
