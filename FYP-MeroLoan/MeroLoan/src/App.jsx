@@ -42,6 +42,7 @@ import Policy from "./pages/Policy";
 import AboutPage from "./pages/AboutUs";
 import FineSuccess from "./pages/FineSuccess";
 import NotFound from "./pages/NotFound";
+import UserFines from "./pages/UserFines";
 
 const socket = io("http://localhost:5000");
 
@@ -331,6 +332,14 @@ function App() {
               element={
                 <AdminRoute>
                   <AdminAppealsPage />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/userFines"
+              element={
+                <AdminRoute>
+                  <UserFines />
                 </AdminRoute>
               }
             />

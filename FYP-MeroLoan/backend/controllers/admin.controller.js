@@ -3,6 +3,7 @@ import { Loan } from "../models/loan.model.js";
 import { KYC } from "../models/kyc.model.js";
 import { Transaction } from "../models/transaction.model.js";
 import { ActiveContract } from "../models/activeContract.model.js";
+import { Fine } from "../models/fine.model.js";
 
 export const getAdminStats = async (req, res) => {
   try {
@@ -245,6 +246,38 @@ export const getAllUsers = async (req, res, next) => {
       data: users,
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllFines = async (req, res, next) => {
+  try {
+    // Find all loans with fines (status can be pending or paid)
+    const fines = await Fine.find(
+      {
+        fineAmount: { $gt: 0 }, // Only get loans with fines
+      },
+      {
+        _id: 1,
+        loanId: 1,
+        borrowerId: 1,
+        originalAmount: 1,
+        finePercent: 1,
+        fineAmount: 1,
+        daysLate: 1,
+        status: 1,
+        createdAt: 1,
+        paidAt: 1,
+        transactionId: 1,
+      }
+    ).sort({ createdAt: -1 }); // Sort by newest first
+
+    res.status(200).json({
+      success: true,
+      data: fines,
+    });
+  } catch (error) {
+    console.error("Get all fines error:", error);
     next(error);
   }
 };

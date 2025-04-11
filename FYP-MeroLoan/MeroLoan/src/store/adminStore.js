@@ -17,6 +17,8 @@ export const useAdminStore = create((set) => ({
   },
   allUsers: [], // State for all users
   allLoans: [], // State for all loans
+  allFines: [], // State for all fines
+
   allInsuranceSubscriptions: [], // State for all insurance subscriptions
   isLoading: false, // Loading state
   error: null, // Error state
@@ -66,6 +68,27 @@ export const useAdminStore = create((set) => ({
     }
   },
 
+  // Fetch all fines (for admin)
+  fetchAllFines: async () => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await axios.get(`${API_URL}/fines`, {
+        withCredentials: true,
+      });
+
+      set({
+        allFines: response.data.data,
+        isLoading: false,
+      });
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || "Failed to fetch all fines",
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
   // Ban a user
   banUser: async (userId) => {
     set({ isLoading: true, error: null });

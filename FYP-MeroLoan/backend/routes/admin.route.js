@@ -6,6 +6,7 @@ import {
   getAllUsers,
   banUser,
   unbanUser,
+  getAllFines,
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
@@ -18,6 +19,8 @@ router.get("/stats", isAdmin, getAdminStats);
 
 // Route to get all users (for admin)
 router.get("/users", isAdmin, getAllUsers);
+
+router.get("/fines", isAdmin, getAllFines);
 
 // Route to ban a user
 router.patch("/users/:userId/ban", isAdmin, banUser);
