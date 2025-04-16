@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useTransactionStore } from "../store/transactionStore";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
@@ -8,14 +8,18 @@ import { useAuthStore } from "../store/authStore";
 import {
   ArrowDown,
   ArrowUp,
-  Calendar,
   ChevronDown,
   CreditCard,
-  DollarSign,
-  Filter,
   Search,
   ShieldCheck,
   ShieldX,
+  RefreshCw,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Download,
+  Sliders,
 } from "lucide-react";
 
 const TransactionStatus = ({ status }) => {
@@ -23,22 +27,22 @@ const TransactionStatus = ({ status }) => {
     switch (status) {
       case "COMPLETED":
         return {
-          color: "bg-green-100 text-green-800 border-green-200",
-          icon: <DollarSign className="w-3 h-3 mr-1" />,
+          color: "bg-emerald-50 text-emerald-700",
+          icon: <CheckCircle className="w-3 h-3 mr-1" />,
         };
       case "PENDING":
         return {
-          color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-          icon: <Calendar className="w-3 h-3 mr-1" />,
+          color: "bg-amber-50 text-amber-700",
+          icon: <Clock className="w-3 h-3 mr-1" />,
         };
       case "FAILED":
         return {
-          color: "bg-red-100 text-red-800 border-red-200",
-          icon: <ShieldX className="w-3 h-3 mr-1" />,
+          color: "bg-rose-50 text-rose-700",
+          icon: <XCircle className="w-3 h-3 mr-1" />,
         };
       default:
         return {
-          color: "bg-gray-100 text-gray-800 border-gray-200",
+          color: "bg-gray-50 text-gray-700",
           icon: <CreditCard className="w-3 h-3 mr-1" />,
         };
     }
@@ -48,7 +52,7 @@ const TransactionStatus = ({ status }) => {
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${color}`}
+      className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${color}`}
     >
       {icon}
       {status}
@@ -89,24 +93,26 @@ const TransactionCard = ({ transaction, user, expanded, toggleExpand }) => {
 
   const getTransactionIcon = () => {
     if (transaction.type === "REPAYMENT") {
-      return <ArrowDown className="w-5 h-5 text-green-500" />;
+      return <ArrowDown className="w-5 h-5 text-emerald-500" />;
     }
     if (transaction.lender?._id === user?._id) {
-      return <ArrowUp className="w-5 h-5 text-blue-500" />;
+      return <ArrowUp className="w-5 h-5 text-indigo-500" />;
     } else if (transaction.borrower?._id === user?._id) {
-      return <ArrowDown className="w-5 h-5 text-purple-500" />;
+      return <ArrowDown className="w-5 h-5 text-violet-500" />;
     }
     return <CreditCard className="w-5 h-5 text-gray-500" />;
   };
 
-  const getBorderColor = () => {
-    if (transaction.lender?._id === user?._id) {
-      return "border-blue-500";
-    } else if (transaction.type === "REPAYMENT") {
-      return "border-green-500";
-    } else {
-      return "border-purple-500";
+  const getAmountColor = () => {
+    if (transaction.type === "REPAYMENT") {
+      return "text-emerald-600";
     }
+    if (transaction.lender?._id === user?._id) {
+      return "text-indigo-600";
+    } else if (transaction.borrower?._id === user?._id) {
+      return "text-violet-600";
+    }
+    return "text-gray-900";
   };
 
   return (
@@ -116,14 +122,13 @@ const TransactionCard = ({ transaction, user, expanded, toggleExpand }) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
+      whileHover={{ scale: 1.01 }}
     >
-      <div
-        className={`mb-4 bg-white rounded-lg shadow overflow-hidden border-l-4 hover:shadow-md transition-all duration-200 ${getBorderColor()}`}
-      >
-        <div className="p-4 ">
+      <div className="mb-3 bg-white rounded-xl shadow-sm hover:shadow transition-all duration-200 overflow-hidden">
+        <div className="p-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full bg-gray-100">
+              <div className="p-2 rounded-full bg-gray-50">
                 {getTransactionIcon()}
               </div>
               <div>
@@ -136,20 +141,23 @@ const TransactionCard = ({ transaction, user, expanded, toggleExpand }) => {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-lg">
+            <div className="flex items-center gap-3">
+              <span className={`font-semibold text-lg ${getAmountColor()}`}>
                 ${transaction.amount.toFixed(2)}
               </span>
-              <button
-                className="h-8 w-8 p-0 rounded-full hover:bg-gray-100 flex items-center justify-center"
+              <motion.button
+                className="h-8 w-8 p-0 rounded-full hover:bg-gray-50 flex items-center justify-center"
                 onClick={() => toggleExpand(transaction._id)}
+                whileHover={{ backgroundColor: "#f9fafb" }}
+                whileTap={{ scale: 0.95 }}
               >
-                <ChevronDown
-                  className={`h-5 w-5 transition-transform ${
-                    expanded ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
+                <motion.div
+                  animate={{ rotate: expanded ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="h-5 w-5 text-gray-500" />
+                </motion.div>
+              </motion.button>
             </div>
           </div>
         </div>
@@ -162,40 +170,37 @@ const TransactionCard = ({ transaction, user, expanded, toggleExpand }) => {
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="p-4 pt-3">
-                <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
-                  <div>
-                    <p className="text-gray-500 mb-1">Status</p>
-                    <TransactionStatus status={transaction.status} />
-                  </div>
-                  <div>
-                    <p className="text-gray-500 mb-1">Insurance</p>
-                    <div className="flex items-center">
-                      {transaction.insuranceAdded ? (
-                        <div className="group relative">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border bg-blue-50 text-blue-700 border-blue-200">
-                            <ShieldCheck className="w-3 h-3 mr-1" />
-                            Protected
-                          </span>
-                          <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 invisible group-hover:visible bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap">
-                            This transaction is insured
+              <div className="px-4 pb-4">
+                <div className="p-4 bg-gray-50 rounded-xl">
+                  <div className="grid grid-cols-2 gap-6 text-sm">
+                    <div>
+                      <p className="text-gray-500 mb-1 text-xs">Status</p>
+                      <TransactionStatus status={transaction.status} />
+                    </div>
+                    <div>
+                      <p className="text-gray-500 mb-1 text-xs">Insurance</p>
+                      <div className="flex items-center">
+                        {transaction.insuranceAdded ? (
+                          <div className="group relative">
+                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700">
+                              <ShieldCheck className="w-3 h-3 mr-1" />
+                              Protected
+                            </span>
+                            <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 invisible group-hover:visible bg-gray-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap z-10">
+                              This transaction is insured
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border bg-gray-50 text-gray-700 border-gray-200">
-                          <ShieldX className="w-3 h-3 mr-1" />
-                          No Insurance
-                        </span>
-                      )}
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700">
+                            <ShieldX className="w-3 h-3 mr-1" />
+                            No Insurance
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-              {/* <div className="p-4 pt-0 flex justify-end">
-                <button className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50">
-                  View Details
-                </button>
-              </div> */}
             </motion.div>
           )}
         </AnimatePresence>
@@ -232,42 +237,66 @@ const TransactionSummary = ({ transactions, user }) => {
   const summaryItems = [
     {
       title: "Total Lent",
-      value: `$${stats.totalLent.toFixed(2)}`,
-      icon: <ArrowUp className="w-5 h-5 text-blue-500" />,
-      color: "bg-blue-50",
+      value: `${stats.totalLent.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      icon: <ArrowUp className="w-5 h-5 text-indigo-500" />,
+      color: "from-white to white",
     },
     {
       title: "Total Borrowed",
-      value: `$${stats.totalBorrowed.toFixed(2)}`,
-      icon: <ArrowDown className="w-5 h-5 text-purple-500" />,
-      color: "bg-purple-50",
+      value: `${stats.totalBorrowed.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      icon: <ArrowDown className="w-5 h-5 text-violet-500" />,
+      color: "from-white to white",
     },
     {
       title: "Pending to Receive",
-      value: `$${stats.pendingLent.toFixed(2)}`,
-      icon: <Calendar className="w-5 h-5 text-amber-500" />,
-      color: "bg-amber-50",
+      value: `${stats.pendingLent.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      icon: <Clock className="w-5 h-5 text-amber-500" />,
+      color: "from-white to white",
     },
     {
       title: "Pending to Pay",
-      value: `$${stats.pendingBorrowed.toFixed(2)}`,
-      icon: <Calendar className="w-5 h-5 text-red-500" />,
-      color: "bg-red-50",
+      value: `${stats.pendingBorrowed.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      icon: <Clock className="w-5 h-5 text-rose-500" />,
+      color: "from-white to white",
     },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {summaryItems.map((item, index) => (
-        <div key={index} className="bg-white rounded-lg shadow-sm p-4">
+        <motion.div
+          key={index}
+          className={`bg-gradient-to-br ${item.color} rounded-xl shadow-sm p-5 border border-gray-100`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1 }}
+          whileHover={{
+            // y: -5,
+            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+          }}
+        >
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-full ${item.color}`}>{item.icon}</div>
+            <div className="p-3 rounded-full bg-white/80 shadow-sm">
+              {item.icon}
+            </div>
             <div>
-              <p className="text-sm text-gray-500">{item.title}</p>
-              <p className="text-xl font-semibold">{item.value}</p>
+              <p className="text-sm text-gray-600">{item.title}</p>
+              <p className="text-xl font-bold">{item.value}</p>
             </div>
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );
@@ -277,82 +306,123 @@ const EmptyState = () => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
-    className="text-center py-12"
+    className="text-center py-16 px-4"
   >
-    <div className="mx-auto w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-      <CreditCard className="w-12 h-12 text-gray-400" />
+    <div className="mx-auto w-20 h-20 rounded-full bg-gray-50 flex items-center justify-center mb-4">
+      <CreditCard className="w-10 h-10 text-gray-400" />
     </div>
-    <h3 className="text-lg font-medium text-gray-900 mb-1">
+    <h3 className="text-lg font-medium text-gray-900 mb-2">
       No transactions found
     </h3>
     <p className="text-gray-500 max-w-md mx-auto mb-6">
       There are no transactions matching your current filters. Try changing your
-      filters or create a new transaction.
+      filters or check back later.
     </p>
-    <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-      Create New Transaction
-    </button>
+    <motion.button
+      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors inline-flex items-center"
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <RefreshCw className="w-4 h-4 mr-2" />
+      Reset Filters
+    </motion.button>
   </motion.div>
 );
 
 const LoadingState = () => (
-  <div className="space-y-4">
+  <div className="space-y-4 py-4">
     {[1, 2, 3].map((i) => (
-      <div key={i} className="mb-4 bg-white rounded-lg shadow overflow-hidden">
-        <div className="p-4 pb-0">
+      <div
+        key={i}
+        className="mb-4 bg-white rounded-xl shadow-sm overflow-hidden"
+      >
+        <div className="p-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse"></div>
+              <div className="h-10 w-10 rounded-full bg-gray-100 animate-pulse"></div>
               <div>
-                <div className="h-5 w-40 bg-gray-200 animate-pulse rounded"></div>
-                <div className="h-4 w-24 mt-2 bg-gray-200 animate-pulse rounded"></div>
+                <div className="h-5 w-40 bg-gray-100 animate-pulse rounded-md"></div>
+                <div className="h-4 w-24 mt-2 bg-gray-100 animate-pulse rounded-md"></div>
               </div>
             </div>
-            <div className="h-6 w-20 bg-gray-200 animate-pulse rounded"></div>
+            <div className="h-6 w-20 bg-gray-100 animate-pulse rounded-md"></div>
           </div>
         </div>
         <div className="p-4">
-          <div className="grid grid-cols-2 gap-4 mt-2">
-            <div className="h-8 w-full bg-gray-200 animate-pulse rounded"></div>
-            <div className="h-8 w-full bg-gray-200 animate-pulse rounded"></div>
-          </div>
+          <div className="h-16 w-full bg-gray-50 animate-pulse rounded-xl"></div>
         </div>
       </div>
     ))}
   </div>
 );
 
-const CustomDropdown = ({ options, value, onChange, buttonText }) => {
+const CustomDropdown = ({ options, value, onChange, buttonText, icon }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
-    <div className="relative">
-      <button
-        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"
+    <div className="relative" ref={dropdownRef}>
+      <motion.button
+        className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg hover:bg-gray-50 flex items-center shadow-sm"
         onClick={() => setIsOpen(!isOpen)}
+        whileHover={{ backgroundColor: "#f9fafb" }}
+        whileTap={{ scale: 0.98 }}
       >
+        {icon && <span className="mr-2">{icon}</span>}
         {buttonText}
-        <ChevronDown className="ml-1 h-4 w-4" />
-      </button>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronDown className="ml-1 h-4 w-4" />
+        </motion.div>
+      </motion.button>
 
-      {isOpen && (
-        <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg z-10 py-1">
-          {options.map((option) => (
-            <button
-              key={option.value}
-              className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                value === option.value ? "bg-gray-50 font-medium" : ""
-              }`}
-              onClick={() => {
-                onChange(option.value);
-                setIsOpen(false);
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      )}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg z-10 py-1 border border-gray-100"
+          >
+            {options.map((option) => (
+              <motion.button
+                key={option.value}
+                className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                  value === option.value
+                    ? "bg-indigo-50 text-indigo-700 font-medium"
+                    : "text-gray-700"
+                }`}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                whileHover={{
+                  backgroundColor:
+                    value === option.value ? "#eef2ff" : "#f9fafb",
+                }}
+              >
+                {option.label}
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -366,7 +436,7 @@ const TransactionHistory = () => {
   const [sortOrder, setSortOrder] = useState("newest");
   const [expandedId, setExpandedId] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (user?._id) {
@@ -379,6 +449,76 @@ const TransactionHistory = () => {
 
   const toggleExpand = (id) => {
     setExpandedId(expandedId === id ? null : id);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      if (user?._id) {
+        await fetchUserTransactions(user._id);
+      }
+    } catch (err) {
+      console.error("Error refreshing data:", err);
+    } finally {
+      setTimeout(() => setRefreshing(false), 800); // Add a slight delay for better UX
+    }
+  };
+
+  const exportToCSV = () => {
+    if (!sortedTransactions || sortedTransactions.length === 0) {
+      alert("No transactions to export");
+      return;
+    }
+
+    // Create CSV header
+    const headers = [
+      "Date",
+      "Type",
+      "Amount",
+      "Status",
+      "Counterparty",
+      "Insurance",
+    ];
+
+    // Format transaction data for CSV
+    const csvData = sortedTransactions.map((transaction) => {
+      const date = new Date(transaction.createdAt).toLocaleDateString();
+      const type =
+        transaction.lender?._id === user?._id
+          ? "Lent"
+          : transaction.type === "REPAYMENT"
+          ? "Repayment"
+          : "Borrowed";
+      const amount = transaction.amount.toFixed(2);
+      const status = transaction.status;
+      const counterparty =
+        transaction.lender?._id === user?._id
+          ? transaction.borrower?.name || "Unknown"
+          : transaction.lender?.name || "Unknown";
+      const insurance = transaction.insuranceAdded ? "Yes" : "No";
+
+      return [date, type, amount, status, counterparty, insurance];
+    });
+
+    // Combine header and data
+    const csvContent = [
+      headers.join(","),
+      ...csvData.map((row) => row.join(",")),
+    ].join("\n");
+
+    // Create download link
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `transactions_${new Date().toISOString().split("T")[0]}.csv`
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const filteredTransactions = transactionsArray.filter((transaction) => {
@@ -433,13 +573,6 @@ const TransactionHistory = () => {
     return 0;
   });
 
-  const statusOptions = [
-    { label: "All Status", value: "all" },
-    { label: "Completed", value: "COMPLETED" },
-    { label: "Pending", value: "PENDING" },
-    { label: "Failed", value: "FAILED" },
-  ];
-
   const sortOptions = [
     { label: "Newest First", value: "newest" },
     { label: "Oldest First", value: "oldest" },
@@ -447,11 +580,18 @@ const TransactionHistory = () => {
     { label: "Lowest Amount", value: "lowest" },
   ];
 
+  const resetFilters = () => {
+    setActiveTab("all");
+    setSearchQuery("");
+    setSortOrder("newest");
+    setStatusFilter("all");
+  };
+
   return (
     <>
       <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <div className="max-w-7xl mx-auto pt-24 px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="max-w-7xl mx-auto pt-24 px- sm:px- lg:px- pb-12">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -467,10 +607,31 @@ const TransactionHistory = () => {
                   View and manage your transaction records
                 </p>
               </div>
-              <button className="mt-4 md:mt-0 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center">
-                <CreditCard className="mr-2 h-4 w-4" />
-                New Transaction
-              </button>
+              <div className="mt-4 md:mt-0 flex items-center gap-3">
+                <motion.button
+                  className="px-3 py-2 bg-white text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center shadow-sm"
+                  onClick={handleRefresh}
+                  disabled={refreshing || isLoading}
+                  whileHover={{ backgroundColor: "#f9fafb" }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <RefreshCw
+                    className={`mr-2 h-4 w-4 ${
+                      refreshing ? "animate-spin" : ""
+                    }`}
+                  />
+                  Refresh
+                </motion.button>
+                <motion.button
+                  className="px-3 py-2 bg-white text-gray-700 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors flex items-center shadow-sm"
+                  onClick={exportToCSV}
+                  whileHover={{ backgroundColor: "#f9fafb" }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export
+                </motion.button>
+              </div>
             </div>
 
             {!isLoading && transactionsArray.length > 0 && (
@@ -480,94 +641,60 @@ const TransactionHistory = () => {
               />
             )}
 
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-              <div className="p-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                  <div className="flex bg-gray-100 rounded-md p-1">
+            <div className="bg-white shadow-sm rounded-xl overflow-hidden border border-gray-100">
+              <div className="p-5">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                  <div className="flex bg-gray-50 rounded-lg p-1 shadow-inner">
                     <button
                       onClick={() => setActiveTab("all")}
-                      className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                      className={`px-4 py-2 text-sm rounded-lg transition-colors ${
                         activeTab === "all"
-                          ? "bg-blue-600 text-white"
-                          : "text-gray-700 hover:bg-gray-200"
+                          ? "bg-indigo-500 text-white shadow-sm"
+                          : "text-gray-700 hover:bg-gray-100"
                       }`}
                     >
                       All Transactions
                     </button>
                     <button
                       onClick={() => setActiveTab("lent")}
-                      className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                      className={`px-4 py-2 text-sm rounded-lg transition-colors ${
                         activeTab === "lent"
-                          ? "bg-blue-600 text-white"
-                          : "text-gray-700 hover:bg-gray-200"
+                          ? "bg-indigo-500 text-white shadow-sm"
+                          : "text-gray-700 hover:bg-gray-100"
                       }`}
                     >
                       Lent
                     </button>
                     <button
                       onClick={() => setActiveTab("borrowed")}
-                      className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                      className={`px-4 py-2 text-sm rounded-lg transition-colors ${
                         activeTab === "borrowed"
-                          ? "bg-blue-600 text-white"
-                          : "text-gray-700 hover:bg-gray-200"
+                          ? "bg-indigo-500 text-white shadow-sm"
+                          : "text-gray-700 hover:bg-gray-100"
                       }`}
                     >
                       Borrowed
                     </button>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                     <div className="relative w-full sm:w-64">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                       <input
                         placeholder="Search transactions..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
                       />
                     </div>
 
-                    <div className="flex gap-2">
-                      <div className="relative">
-                        <button
-                          className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 flex items-center"
-                          onClick={() =>
-                            setIsStatusDropdownOpen(!isStatusDropdownOpen)
-                          }
-                        >
-                          {statusOptions.find(
-                            (option) => option.value === statusFilter
-                          )?.label || "Status"}
-                          <ChevronDown className="ml-1 h-4 w-4" />
-                        </button>
-
-                        {isStatusDropdownOpen && (
-                          <div className="absolute left-0 mt-1 w-36 bg-white rounded-md shadow-lg z-10 py-1">
-                            {statusOptions.map((option) => (
-                              <button
-                                key={option.value}
-                                className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                                  statusFilter === option.value
-                                    ? "bg-gray-50 font-medium"
-                                    : ""
-                                }`}
-                                onClick={() => {
-                                  setStatusFilter(option.value);
-                                  setIsStatusDropdownOpen(false);
-                                }}
-                              >
-                                {option.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
+                    <div className="flex gap-3">
                       <CustomDropdown
                         options={sortOptions}
                         value={sortOrder}
                         onChange={setSortOrder}
-                        buttonText={<Filter className="h-4 w-4" />}
+                        buttonText="Sort"
+                        icon={<Sliders className="h-4 w-4" />}
                       />
                     </div>
                   </div>
@@ -576,8 +703,20 @@ const TransactionHistory = () => {
                 {isLoading ? (
                   <LoadingState />
                 ) : error ? (
-                  <div className="p-4 text-center text-red-500 bg-red-50 rounded-lg">
-                    {error}
+                  <div className="p-6 text-center text-rose-600 bg-rose-50 rounded-xl border border-rose-100">
+                    <AlertCircle className="h-10 w-10 mx-auto mb-3 text-rose-500" />
+                    {/* <p className="font-medium mb-2">
+                      Error loading transactions
+                    </p> */}
+                    <p className="text-sm mb-4">{error}</p>
+                    <motion.button
+                      className="px-4 py-2 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 transition-colors"
+                      onClick={handleRefresh}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      Refresh
+                    </motion.button>
                   </div>
                 ) : sortedTransactions.length === 0 ? (
                   <EmptyState />

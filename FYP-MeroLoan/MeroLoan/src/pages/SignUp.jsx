@@ -10,6 +10,7 @@ import defaultUser from "../assets/userProfile.png";
 const SignUp = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [password, setPassword] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
@@ -19,6 +20,24 @@ const SignUp = () => {
   const navigate = useNavigate();
   const { signup, error, isLoading } = useAuthStore();
 
+  // List of valid email domains
+  const validEmailDomains = [
+    "gmail.com",
+    "yahoo.com",
+    "hotmail.com",
+    "outlook.com",
+    "icloud.com",
+    "aol.com",
+    "protonmail.com",
+    "mail.com",
+    "zoho.com",
+    "yandex.com",
+    "gmx.com",
+    "live.com",
+    "msn.com",
+    // Add more domains as needed
+  ];
+
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -27,8 +46,43 @@ const SignUp = () => {
     }
   };
 
+  const validateEmail = (email) => {
+    // First check general email format
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      return false;
+    }
+
+    // Then check if domain is in our allowed list
+    const domain = email.split("@")[1].toLowerCase();
+    return validEmailDomains.includes(domain);
+  };
+
+  const handleEmailChange = (e) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+
+    if (!newEmail) {
+      setEmailError("");
+    } else if (!validateEmail(newEmail)) {
+      setEmailError(
+        "Please enter a valid email address with a recognized domain"
+      );
+    } else {
+      setEmailError("");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateEmail(email)) {
+      setEmailError(
+        "Please enter a valid email address with a recognized domain"
+      );
+      return;
+    }
+
     let uploadedImage = null;
     let publicId = null;
 
@@ -138,13 +192,18 @@ const SignUp = () => {
               pattern="[0-9]{10}"
               title="Please enter a valid 10-digit phone number"
             />
-            <Input
-              icon={Mail}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-            />
+            <div className="relative">
+              <Input
+                icon={Mail}
+                type="email"
+                value={email}
+                onChange={handleEmailChange}
+                placeholder="Email"
+              />
+              {emailError && (
+                <p className="text-red-500 text-xs mt-1">{emailError}</p>
+              )}
+            </div>
             <Input
               icon={Lock}
               type="password"
@@ -168,7 +227,7 @@ const SignUp = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
-              disabled={isLoading || isUploading}
+              disabled={isLoading || isUploading || emailError}
             >
               {isLoading ? (
                 <Loader className="animate-spin mx-auto" size={24} />

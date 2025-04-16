@@ -96,9 +96,7 @@ const KYCForm = () => {
       };
 
       await submitKYCRequest(finalKYCData);
-      toast.success("KYC submitted successfully! Redirecting to Profile...", {
-        onClose: () => navigate(`/userProfile`),
-      });
+      toast.success("KYC submitted successfully");
     } catch (error) {
       console.error("Error submitting KYC:", error);
     }
