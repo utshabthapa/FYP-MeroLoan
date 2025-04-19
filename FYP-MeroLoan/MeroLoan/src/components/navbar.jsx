@@ -412,7 +412,7 @@ const Navbar = () => {
                         isActive("/policy") ? activeLinkClasses : ""
                       }`}
                     >
-                      <span>Privacy Policy</span>
+                      <span>Policy</span>
                     </Link>
                   </li>
                   <li>
@@ -486,7 +486,7 @@ const Navbar = () => {
                         isActive("/policy") ? activeLinkClasses : ""
                       }`}
                     >
-                      <span>Privacy Policy</span>
+                      <span>Policy</span>
                     </Link>
                   </li>
                   <li className="relative" ref={notificationRef}>

@@ -740,7 +740,7 @@ const Dashboard = () => {
                       boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
                     }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate("/oan-requests")}
+                    onClick={() => navigate("/loan-requests")}
                   >
                     <DollarSign className="w-8 h-8 text-emerald-500 mb-4" />
                     <h4 className="text-lg font-bold text-gray-800 mb-2">
@@ -753,50 +753,6 @@ const Dashboard = () => {
                       Start Lending <ChevronRight className="w-4 h-4 ml-1" />
                     </div>
                   </motion.div>
-
-                  {/* <motion.div
-                    className="p-6 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border border-amber-100 cursor-pointer"
-                    whileHover={{
-                      y: -5,
-                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => na("/notifications")}
-                  >
-                    <Bell className="w-8 h-8 text-amber-500 mb-4" />
-                    <h4 className="text-lg font-bold text-gray-800 mb-2">
-                      Notifications
-                    </h4>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Check your latest updates, alerts and payment reminders.
-                    </p>
-                    <div className="flex items-center text-amber-500 font-medium text-sm">
-                      View Notifications{" "}
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </div>
-                  </motion.div>
-
-                  <motion.div
-                    className="p-6 bg-gradient-to-br from-sky-50 to-cyan-50 rounded-xl border border-sky-100 cursor-pointer"
-                    whileHover={{
-                      y: -5,
-                      boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => router.push("/settings")}
-                  >
-                    <Settings className="w-8 h-8 text-sky-500 mb-4" />
-                    <h4 className="text-lg font-bold text-gray-800 mb-2">
-                      Account Settings
-                    </h4>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Manage your profile, security, and notification
-                      preferences.
-                    </p>
-                    <div className="flex items-center text-sky-500 font-medium text-sm">
-                      Go to Settings <ChevronRight className="w-4 h-4 ml-1" />
-                    </div>
-                  </motion.div> */}
                 </div>
               </motion.div>
             </div>

@@ -279,8 +279,8 @@ const KYCForm = () => {
                       >
                         <option value="">Select Identity Type</option>
                         <option value="citizenship">Citizenship</option>
-                        <option value="passport">Passport</option>
-                        <option value="license">Driver's License</option>
+                        {/* <option value="passport">Passport</option>
+                        <option value="license">Driver's License</option> */}
                       </select>
                     </div>
                     <div className="space-y-2">
