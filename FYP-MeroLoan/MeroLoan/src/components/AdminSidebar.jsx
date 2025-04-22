@@ -13,8 +13,9 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
+  AlertTriangle, // Icon for Bad Loans
 } from "lucide-react";
-import { useAuthStore } from "@/store/authStore"; // Adjust the import path as needed
+import { useAuthStore } from "@/store/authStore";
 
 const AdminSidebar = () => {
   const location = useLocation();
@@ -70,6 +71,13 @@ const AdminSidebar = () => {
     },
   ];
 
+  // Single Bad Loans item
+  const badLoansItem = {
+    path: "/bad-loans",
+    name: "Bad Loans",
+    icon: AlertTriangle,
+  };
+
   const renderMenuItem = (item) => {
     const isActive = location.pathname === item.path;
     const Icon = item.icon;
@@ -121,7 +129,7 @@ const AdminSidebar = () => {
           </button>
 
           {applicationsOpen && (
-            <div className="mt-1 ml-4  border-l border-gray-200">
+            <div className="mt-1 ml-4 border-l border-gray-200">
               {applicationItems.map(renderMenuItem)}
             </div>
           )}
@@ -131,7 +139,7 @@ const AdminSidebar = () => {
         <div className="mx-4 my-2 border-t border-gray-200"></div>
 
         {/* Moderation Section */}
-        <div className="mb-4 ml-2">
+        <div className="mb-2 ml-2">
           <button
             onClick={() => setModerationOpen(!moderationOpen)}
             className="flex items-center justify-between w-full px-4 py-3 text-gray-700 hover:bg-gray-100 transition-colors duration-150"
@@ -148,11 +156,17 @@ const AdminSidebar = () => {
           </button>
 
           {moderationOpen && (
-            <div className=" mt-1 ml-4  border-l border-gray-200">
+            <div className="mt-1 ml-4 border-l border-gray-200">
               {moderationItems.map(renderMenuItem)}
             </div>
           )}
         </div>
+
+        {/* Divider */}
+        <div className="mx-4 my-2 border-t border-gray-200"></div>
+
+        {/* Bad Loans Section - Simple single item */}
+        <div className="mb-2">{renderMenuItem(badLoansItem)}</div>
       </nav>
 
       {/* Logout Button */}

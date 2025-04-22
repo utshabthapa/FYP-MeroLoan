@@ -22,6 +22,30 @@ export const useAdminStore = create((set) => ({
   allInsuranceSubscriptions: [], // State for all insurance subscriptions
   isLoading: false, // Loading state
   error: null, // Error state
+  // Add bad loans state
+  badLoans: [],
+
+  // Fetch all bad loans
+  fetchBadLoans: async () => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const response = await axios.get(`${API_URL}/bad-loans`, {
+        withCredentials: true,
+      });
+
+      set({
+        badLoans: response.data.data,
+        isLoading: false,
+      });
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || "Failed to fetch bad loans",
+        isLoading: false,
+      });
+      throw error;
+    }
+  },
 
   // Fetch admin stats (total users, loans, insurance subscriptions, etc.)
   fetchAdminStats: async () => {

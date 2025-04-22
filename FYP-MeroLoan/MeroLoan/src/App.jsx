@@ -43,6 +43,7 @@ import AboutPage from "./pages/AboutUs";
 import FineSuccess from "./pages/FineSuccess";
 import NotFound from "./pages/NotFound";
 import UserFines from "./pages/UserFines";
+import BadLoans from "./pages/BadLoans";
 
 const socket = io("http://localhost:5000");
 
@@ -340,6 +341,14 @@ function App() {
               element={
                 <AdminRoute>
                   <UserFines />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/bad-loans"
+              element={
+                <AdminRoute>
+                  <BadLoans />
                 </AdminRoute>
               }
             />

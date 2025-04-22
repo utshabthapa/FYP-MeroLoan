@@ -8,6 +8,7 @@ import {
   unbanUser,
   getAllFines,
 } from "../controllers/admin.controller.js";
+import { getBadLoans } from "../controllers/badLoan.controller.js"; // Add this import
 
 const router = express.Router();
 
@@ -24,7 +25,8 @@ router.get("/fines", isAdmin, getAllFines);
 
 // Route to ban a user
 router.patch("/users/:userId/ban", isAdmin, banUser);
-
+// Route to get all bad loans
+router.get("/bad-loans", isAdmin, getBadLoans);
 // Route to unban a user
 router.patch("/users/:userId/unban", isAdmin, unbanUser);
 
