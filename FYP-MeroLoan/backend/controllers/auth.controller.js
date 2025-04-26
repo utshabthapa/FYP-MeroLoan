@@ -118,37 +118,44 @@ export const updateProfilePicture = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
 export const updateProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    const { userData } = req.body;
+    const { userData = {} } = req.body;
     const { name, phone, address } = userData;
 
-    // Validate required fields
+    // 1. Validate required fields
     if (!id) {
       return res.status(400).json({ error: "User ID is required" });
     }
 
-    // Find the user
+    // 2. Check if the logged-in user matches the requested user ID
+    if (req.user?._id.toString() !== id) {
+      return res
+        .status(403)
+        .json({ error: "Unauthorized: You can only update your own profile" });
+    }
+
+    // 3. Find the user
     const user = await User.findById(id);
     if (!user) {
       console.error("User not found");
       return res.status(404).json({ error: "User not found" });
     }
 
-    console.log("User found:dfsdfdsfdsf", name, phone, address);
-    // Update user fields if they are provided
-    if (name) user.name = name;
-    if (phone) user.phone = phone;
-    if (address) user.address = address;
+    // 4. Update user fields if provided
+    if (name !== undefined) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+    if (address !== undefined) user.address = address;
 
-    // Save the updated user
+    // 5. Save the updated user
     await user.save();
 
-    // Remove password from response
+    // 6. Remove password from response
     user.password = undefined;
 
-    // Send response
+    // 7. Send response
     res.status(200).json({
       user,
       message: "Profile updated successfully",
