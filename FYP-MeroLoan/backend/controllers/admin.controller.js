@@ -10,7 +10,9 @@ export const getAdminStats = async (req, res) => {
     // Basic counts
     const totalUsers = await User.countDocuments();
     const totalLoans = await Loan.countDocuments();
-    const activeLoans = await Loan.countDocuments({ status: "active" });
+    const activeLoans = await ActiveContract.countDocuments({
+      status: "active",
+    });
     const totalVerifiedKycs = await KYC.countDocuments({ status: "approved" });
     const bannedUsers = await User.countDocuments({ banStatus: "banned" });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useContext } from "react"; // Add useContext
+import { useState, useEffect, useRef, useContext } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import { Link, useLocation } from "react-router-dom";

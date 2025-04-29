@@ -548,7 +548,8 @@ const LoanDetails = () => {
                       </h2>
                       <div className="space-y-2">
                         <p className="text-gray-600">
-                          <span className="font-medium">Amount:</span> Rs.
+                          <span className="font-medium">Amount:</span>
+                          &nbsp;Rs.{" "}
                           {parseFloat(loan.loanAmount).toLocaleString()}
                         </p>
                         <p className="text-gray-600">
@@ -575,13 +576,14 @@ const LoanDetails = () => {
                         </p>
                         <p className="text-gray-600">
                           <span className="font-medium">Interest Amount:</span>{" "}
-                          Rs.
+                          Rs.&nbsp;
                           {calculateInterestAmount().toLocaleString(undefined, {
                             maximumFractionDigits: 2,
                           })}
                         </p>
                         <p className="text-gray-600">
-                          <span className="font-medium">Total Amount:</span> Rs.
+                          <span className="font-medium">Total Amount:</span>{" "}
+                          Rs.&nbsp;
                           {(
                             parseFloat(loan.loanAmount) +
                             calculateInterestAmount()
@@ -615,7 +617,7 @@ const LoanDetails = () => {
                           </div>
                           <div className="text-right">
                             <p className="font-medium text-gray-800">
-                              Rs.
+                              Rs.&nbsp;
                               {payment.amount.toLocaleString(undefined, {
                                 maximumFractionDigits: 2,
                               })}

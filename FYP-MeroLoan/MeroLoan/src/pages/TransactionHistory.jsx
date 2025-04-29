@@ -143,7 +143,7 @@ const TransactionCard = ({ transaction, user, expanded, toggleExpand }) => {
             </div>
             <div className="flex items-center gap-3">
               <span className={`font-semibold text-lg ${getAmountColor()}`}>
-                ${transaction.amount.toFixed(2)}
+                Rs. {transaction.amount.toFixed(2)}
               </span>
               <motion.button
                 className="h-8 w-8 p-0 rounded-full hover:bg-gray-50 flex items-center justify-center"
@@ -237,7 +237,7 @@ const TransactionSummary = ({ transactions, user }) => {
   const summaryItems = [
     {
       title: "Total Lent",
-      value: `${stats.totalLent.toLocaleString(undefined, {
+      value: `Rs. ${stats.totalLent.toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}`,
@@ -246,7 +246,7 @@ const TransactionSummary = ({ transactions, user }) => {
     },
     {
       title: "Total Borrowed",
-      value: `${stats.totalBorrowed.toLocaleString(undefined, {
+      value: `Rs. ${stats.totalBorrowed.toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}`,
@@ -255,7 +255,7 @@ const TransactionSummary = ({ transactions, user }) => {
     },
     {
       title: "Pending to Receive",
-      value: `${stats.pendingLent.toLocaleString(undefined, {
+      value: `Rs. ${stats.pendingLent.toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}`,
@@ -264,7 +264,7 @@ const TransactionSummary = ({ transactions, user }) => {
     },
     {
       title: "Pending to Pay",
-      value: `${stats.pendingBorrowed.toLocaleString(undefined, {
+      value: `Rs. ${stats.pendingBorrowed.toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })}`,

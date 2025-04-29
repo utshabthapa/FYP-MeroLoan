@@ -177,7 +177,9 @@ const StatCard = ({ title, value, icon, color, gradient, delay, onClick }) => {
       <div className="flex justify-between items-start">
         <div>
           <h3 className="text-gray-600 text-sm font-medium mb-1">{title}</h3>
-          <p className="text-2xl font-bold text-gray-800">{value}</p>
+          <p className="text-2xl font-bold text-gray-800 text-nowrap">
+            {value}
+          </p>
         </div>
         <div className={`p-3 rounded-full bg-white/80 shadow-sm`}>{icon}</div>
       </div>
@@ -234,7 +236,7 @@ const LoanActivityChart = ({ data }) => {
             tick={{ fontSize: 12, fill: "#4B5563" }}
             width={100}
           />
-          <Tooltip content={<CustomTooltip valuePrefix="$" />} />
+          <Tooltip content={<CustomTooltip valuePrefix="Rs." />} />
           <Legend
             formatter={(value) => (
               <span className="text-sm font-medium">{value}</span>
@@ -382,7 +384,7 @@ const TransactionItem = ({ transaction, onClick }) => {
         </div>
       </div>
       <div className="flex flex-col items-end">
-        <p className="font-medium">${transaction.amount.toFixed(2)}</p>
+        <p className="font-medium">Rs. {transaction.amount.toFixed(2)}</p>
         <div
           className={`flex items-center text-xs ${getStatusColor(
             transaction.status
@@ -519,7 +521,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
               <StatCard
                 title="Loan Borrowed"
-                value={`$${
+                value={`Rs. ${
                   dashboardStats?.loanBorrowed
                     ? dashboardStats.loanBorrowed.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
@@ -535,7 +537,7 @@ const Dashboard = () => {
 
               <StatCard
                 title="Loan Lended"
-                value={`$${
+                value={`Rs. ${
                   dashboardStats?.loanLended
                     ? dashboardStats.loanLended.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
@@ -551,7 +553,7 @@ const Dashboard = () => {
 
               <StatCard
                 title="Interest Earnings"
-                value={`$${
+                value={`Rs. ${
                   dashboardStats?.interestEarnings
                     ? dashboardStats.interestEarnings.toLocaleString(
                         undefined,
@@ -570,7 +572,7 @@ const Dashboard = () => {
 
               <StatCard
                 title="Loan Due"
-                value={`$${
+                value={`Rs. ${
                   dashboardStats?.loanDue
                     ? dashboardStats.loanDue.toLocaleString(undefined, {
                         minimumFractionDigits: 2,

@@ -3,7 +3,7 @@ import { User } from "../models/user.model.js";
 import { Notification } from "../models/notification.model.js";
 import { BadLoan } from "../models/badLoan.model.js";
 import { io } from "../index.js";
-import { sendRepaymentReminderEmail } from "../mailtrap/emails.js";
+import { sendRepaymentReminderEmail } from "../Nodemailer/emails.js";
 
 const REMINDER_DAYS = 3;
 const BAD_LOAN_THRESHOLD = 50; // Days after which a loan is considered bad

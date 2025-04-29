@@ -96,8 +96,8 @@ const Policy = () => {
                   </span>
                   <p>
                     <strong>KYC Verification:</strong> All users must complete
-                    identity verification (Aadhaar, PAN, etc.). Fake documents
-                    will lead to permanent bans.
+                    identity verification. Fake documents will lead to permanent
+                    bans.
                   </p>
                 </li>
                 <li className="flex items-start">
@@ -115,16 +115,6 @@ const Policy = () => {
                     3
                   </span>
                   <p>
-                    <strong>No Harassment:</strong> Lenders/borrowers must
-                    communicate respectfully. Threats or spam will result in
-                    account suspension.
-                  </p>
-                </li>
-                <li className="flex items-start">
-                  <span className="bg-blue-100 text-blue-800 rounded-full w-5 h-5 flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
-                    4
-                  </span>
-                  <p>
                     <strong>Account Security:</strong> Users are responsible for
                     maintaining the security of their accounts. Report any
                     suspicious activity immediately.
@@ -132,7 +122,7 @@ const Policy = () => {
                 </li>
                 <li className="flex items-start">
                   <span className="bg-blue-100 text-blue-800 rounded-full w-5 h-5 flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
-                    5
+                    4
                   </span>
                   <p>
                     <strong>Loan Purpose:</strong> Loans must not be used for

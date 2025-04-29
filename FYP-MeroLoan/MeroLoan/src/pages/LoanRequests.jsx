@@ -256,7 +256,7 @@ const LoanRequests = () => {
                         <div>
                           <p className="text-sm text-gray-500">Loan Amount</p>
                           <p className="font-medium text-gray-800">
-                            Rs.{parseFloat(loan.loanAmount).toLocaleString()}
+                            Rs. {parseFloat(loan.loanAmount).toLocaleString()}
                           </p>
                         </div>
                         <div>

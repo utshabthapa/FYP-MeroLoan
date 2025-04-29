@@ -442,15 +442,8 @@ function App() {
               }
             />
             <Route path="/policy" element={<Policy />} />
-            {/* <Route
-            path="/contract-detail-view"
-            element={
-              <ProtectedRoute>
-                <ContractDetailView />
-              </ProtectedRoute>
-            }
-          /> */}
-            {/* 404 Not Found Route - This should be the last route */}
+         
+           
             <Route path="*" element={<NotFound />} />
           </Routes>
         </>

@@ -17,6 +17,8 @@ import {
   AlertCircle,
   ArrowRight,
   User,
+  SortDesc,
+  SortAsc,
 } from "lucide-react";
 
 import Navbar from "@/components/navbar";
@@ -31,6 +33,8 @@ const ActiveContracts = () => {
   const [viewMode, setViewMode] = useState("active"); // active, completed
   const [expandedDetails, setExpandedDetails] = useState({});
   const [userDetails, setUserDetails] = useState({});
+  // Add sorting state - default to "newest"
+  const [sortOrder, setSortOrder] = useState("newest");
 
   useEffect(() => {
     if (user?._id) {
@@ -115,6 +119,25 @@ const ActiveContracts = () => {
     navigate(`/loan-details/${loanId}`);
   };
 
+  // Handle sort order change
+  const handleSortChange = (order) => {
+    setSortOrder(order);
+  };
+
+  // Sort contracts function
+  const sortContracts = (contracts) => {
+    return [...contracts].sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+
+      if (sortOrder === "newest") {
+        return dateB - dateA; // Newest first (descending)
+      } else {
+        return dateA - dateB; // Oldest first (ascending)
+      }
+    });
+  };
+
   // Separate contracts based on user role
   const borrowerContracts = activeContracts.filter(
     (contract) => contract.borrower === user?._id
@@ -124,19 +147,19 @@ const ActiveContracts = () => {
     (contract) => contract.lender === user?._id
   );
 
-  // Further filter by status
-  const activeAsBorrower = borrowerContracts.filter(
-    (contract) => contract.status === "active"
+  // Further filter by status and apply sorting
+  const activeAsBorrower = sortContracts(
+    borrowerContracts.filter((contract) => contract.status === "active")
   );
-  const completedAsBorrower = borrowerContracts.filter(
-    (contract) => contract.status === "completed"
+  const completedAsBorrower = sortContracts(
+    borrowerContracts.filter((contract) => contract.status === "completed")
   );
 
-  const activeAsLender = lenderContracts.filter(
-    (contract) => contract.status === "active"
+  const activeAsLender = sortContracts(
+    lenderContracts.filter((contract) => contract.status === "active")
   );
-  const completedAsLender = lenderContracts.filter(
-    (contract) => contract.status === "completed"
+  const completedAsLender = sortContracts(
+    lenderContracts.filter((contract) => contract.status === "completed")
   );
 
   // Format date
@@ -398,27 +421,56 @@ const ActiveContracts = () => {
                 <h1 className="text-2xl font-bold text-white mb-4 md:mb-0">
                   My Loan Contracts
                 </h1>
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => setViewMode("active")}
-                    className={`px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
-                      viewMode === "active"
-                        ? "bg-blue-600 text-white focus:ring-blue-500"
-                        : "bg-gray-700 text-white hover:bg-gray-600 focus:ring-gray-500"
-                    }`}
-                  >
-                    Active Contracts
-                  </button>
-                  <button
-                    onClick={() => setViewMode("completed")}
-                    className={`px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
-                      viewMode === "completed"
-                        ? "bg-blue-600 text-white focus:ring-blue-500"
-                        : "bg-gray-700 text-white hover:bg-gray-600 focus:ring-gray-500"
-                    }`}
-                  >
-                    Completed Contracts
-                  </button>
+                <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
+                  {/* Sort dropdown */}
+                  <div className="relative inline-block">
+                    <div className="flex items-center bg-gray-700 rounded-md shadow-sm">
+                      <button
+                        onClick={() => handleSortChange("newest")}
+                        className={`px-3 py-2 text-sm flex items-center rounded-l-md ${
+                          sortOrder === "newest"
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-700 text-white hover:bg-gray-600"
+                        }`}
+                      >
+                        <SortDesc size={16} className="mr-1" /> Newest
+                      </button>
+                      <button
+                        onClick={() => handleSortChange("oldest")}
+                        className={`px-3 py-2 text-sm flex items-center rounded-r-md ${
+                          sortOrder === "oldest"
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-700 text-white hover:bg-gray-600"
+                        }`}
+                      >
+                        <SortAsc size={16} className="mr-1" /> Oldest
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* View mode buttons */}
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => setViewMode("active")}
+                      className={`px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
+                        viewMode === "active"
+                          ? "bg-blue-600 text-white focus:ring-blue-500"
+                          : "bg-gray-700 text-white hover:bg-gray-600 focus:ring-gray-500"
+                      }`}
+                    >
+                      Active Contracts
+                    </button>
+                    <button
+                      onClick={() => setViewMode("completed")}
+                      className={`px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
+                        viewMode === "completed"
+                          ? "bg-blue-600 text-white focus:ring-blue-500"
+                          : "bg-gray-700 text-white hover:bg-gray-600 focus:ring-gray-500"
+                      }`}
+                    >
+                      Completed Contracts
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -646,7 +698,6 @@ const ActiveContracts = () => {
                             </div>
                             <div className="text-right">
                               <div className="text-lg font-semibold flex items-center">
-                                <DollarSign size={16} className="mr-1" />
                                 Rs. {payment.amountDue.toLocaleString()}
                               </div>
                               <div className="mt-2">

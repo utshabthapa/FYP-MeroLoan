@@ -88,7 +88,6 @@ const LoanItem = ({ loan, userId, onClick }) => {
           {isLender ? "Loan Given" : "Loan Received"}
         </h4>
         <div className="flex items-center mt-1">
-          <DollarSign className="w-4 h-4 text-gray-500 mr-1" />
           <p className="text-gray-600 text-sm">
             Rs. {formattedAmount} {isLender ? "to receive" : "to repay"}
           </p>
@@ -382,8 +381,21 @@ const UserProfile = () => {
   const fileInputRef = useRef(null);
   const [showFinesModal, setShowFinesModal] = useState(false);
   const navigate = useNavigate();
-  const { user, updateProfilePicture, logout, updateUserProfile } =
+  const { user, refreshUser, updateProfilePicture, logout, updateUserProfile } =
     useAuthStore();
+
+  useEffect(() => {
+    // Refresh user data when component mounts
+    const updateUserData = async () => {
+      try {
+        await refreshUser();
+      } catch (error) {
+        // Handle silently or with toast
+      }
+    };
+
+    updateUserData();
+  }, [refreshUser]);
 
   // Use the active contract store
   const {

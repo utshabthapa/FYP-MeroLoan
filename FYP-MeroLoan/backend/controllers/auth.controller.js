@@ -8,7 +8,7 @@ import {
   sendPasswordResetSuccessEmail,
   sendVerificationEmail,
   sendWelcomeEmail,
-} from "../mailtrap/emails.js";
+} from "../Nodemailer/emails.js";
 import { set } from "mongoose";
 import multer from "multer";
 import path from "path";

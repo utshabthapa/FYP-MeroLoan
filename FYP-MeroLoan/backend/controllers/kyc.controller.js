@@ -1,10 +1,12 @@
 import { KYC } from "../models/kyc.model.js";
 import { User } from "../models/user.model.js";
 import createError from "http-errors";
+import { Notification } from "../models/notification.model.js"; // Import the Notification model
+import { io } from "../index.js"; // Import the `io` instance for real-time notifications
 import {
   sendKYCApprovedEmail,
   sendKYCRejectedEmail,
-} from "../mailtrap/emails.js";
+} from "../Nodemailer/emails.js";
 
 // Submit KYC (with file uploads)
 export const submitKYC = async (req, res) => {
@@ -131,7 +133,9 @@ export const fetchSingleKYCRequest = async (req, res) => {
   }
 };
 
-// Updated verifyKYC function
+
+
+// Updated verifyKYC function with notifications
 export const verifyKYC = async (req, res) => {
   const { kycId, status } = req.body;
 
@@ -160,11 +164,39 @@ export const verifyKYC = async (req, res) => {
 
       // Send KYC approval email
       await sendKYCApprovedEmail(user.email, user.name);
+
+      // Create and send approval notification
+      const notification = new Notification({
+        userId: user._id,
+        message: `Your KYC has been approved! Your credit score has increased.`,
+        timestamp: new Date(),
+      });
+      await notification.save();
+
+      // Emit real-time notification
+      io.to(user._id.toString()).emit("newNotification", {
+        message: notification.message,
+        timestamp: notification.timestamp,
+      });
     } else if (status === "rejected") {
       user.creditScore = Math.max(user.creditScore - 2, 0); // Decrease by 2, but not below 0
 
       // Send KYC rejection email
       await sendKYCRejectedEmail(user.email, user.name);
+
+      // Create and send rejection notification
+      const notification = new Notification({
+        userId: user._id,
+        message: `Your KYC has been rejected. Please review your documents and submit again.`,
+        timestamp: new Date(),
+      });
+      await notification.save();
+
+      // Emit real-time notification
+      io.to(user._id.toString()).emit("newNotification", {
+        message: notification.message,
+        timestamp: notification.timestamp,
+      });
     }
 
     // Save the updated user
