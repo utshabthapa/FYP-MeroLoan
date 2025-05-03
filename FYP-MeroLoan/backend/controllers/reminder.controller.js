@@ -9,14 +9,6 @@ export const checkUserReminders = async (req, res) => {
     const userId = req.params.userId; // Get user ID from URL params
     console.log("checking the user id", userId);
 
-    // Verify that the requesting user can only check their own reminders
-    // if (req.user._id !== userId && req.user.role !== "admin") {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: "Unauthorized: You can only check your own reminders",
-    //   });
-    // }
-
     // Find active contracts where this user is the borrower
     const activeContracts = await ActiveContract.find({
       borrower: userId,

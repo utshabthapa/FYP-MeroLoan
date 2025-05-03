@@ -2,7 +2,7 @@ import express from "express";
 import {
   checkUserReminders,
   triggerAllReminders,
-} from "../controllers/reminderController.js";
+} from "../controllers/reminder.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import { isAdmin } from "../middleware/authHandle.js";
 

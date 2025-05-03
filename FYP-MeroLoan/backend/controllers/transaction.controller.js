@@ -35,38 +35,6 @@ export const getUserTransactions = async (req, res) => {
 };
 
 // Update adminTransfer status for a transaction
-// export const updateAdminTransfer = async (req, res) => {
-//   try {
-//     const { transactionId } = req.params;
-
-//     // Find and update the transaction
-//     const transaction = await Transaction.findById(transactionId);
-
-//     if (!transaction) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Transaction not found",
-//       });
-//     }
-
-//     // Update the adminTransfer field
-//     transaction.adminTransfer = true;
-//     transaction.status = "COMPLETED";
-//     await transaction.save();
-
-//     res.status(200).json({
-//       success: true,
-//       message: "Transaction marked as transferred successfully",
-//       data: transaction,
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       success: false,
-//       message: error.message,
-//     });
-//   }
-// };
-// Update adminTransfer status for a transaction
 export const updateAdminTransfer = async (req, res) => {
   try {
     const { transactionId } = req.params;

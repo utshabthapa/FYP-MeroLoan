@@ -81,7 +81,6 @@ const LoanItem = ({ loan, userId, onClick }) => {
           {isLender ? "Loan Given" : "Loan Received"}
         </h4>
         <div className="flex items-center mt-1">
-          <DollarSign className="w-4 h-4 text-gray-500 mr-1" />
           <p className="text-gray-600 text-sm">
             Rs. {formattedAmount} {isLender ? "to receive" : "to repay"}
           </p>

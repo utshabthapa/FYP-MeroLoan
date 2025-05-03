@@ -76,7 +76,7 @@ const LandingPage = () => {
     },
     {
       title: "Total Money Flow",
-      value: formatValue(landingStats?.totalMoneyFlow, "₹"),
+      value: formatValue(landingStats?.totalMoneyFlow, "Rs. "),
     },
     {
       title: "Total Transactions",
